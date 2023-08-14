@@ -1,3 +1,18 @@
+# Copyright 2023 Craig Hutton
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 #' Import data from MedPC file to an R list.
 #'
 #' Parses MedPC data file and returns variables in a named list. Uses 'filename'
@@ -8,7 +23,7 @@
 #' @param filename full path to MedPC data file
 #' @return list containing each variable in MedPC data file, referenced by variable name
 #'
-#' @author Gary Kane, \email{gkane@@alumni.princeton.edu}
+#' @author Gary Kane, \email{gkane@@alumni.princeton.edu}; Craig P. Hutton, \email{craig.hutton@@gmail.com}
 #'
 #' @references
 #' Code was adapted from [https://github.com/gkane26/rmedpc]

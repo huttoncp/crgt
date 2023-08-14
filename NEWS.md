@@ -1,4 +1,12 @@
-# crgt 0.0.1.9000 - August 6th, 2023
+# crgt 0.0.1.9002 - August 14th, 2023
+
+* Added a new function, `rgt_stability()`, which uses a logistic mixed effects model to check if subjects' choice preferences are stable across the last *n* sessions of the rat gambling task. The default is to check for stability across the past 5 sessions, but this can be adjusted by the user via the "n_sessions" argument. The inclusion of both fixed and random slope effects for the change in choice preference over time (session variable), enables an evaluation of stability for the sample as a whole (fixed effect term for the interaction between choice and session) vs. stability for each individual subject (random slopes for the effect of session clustered by subject). 
+
+* Updated documentation and license information.
+
+* Created a first draft of the readme and package hex sticker.
+
+# crgt 0.0.1.9001 - August 6th, 2023
 
 *	Package created with initial definitions for functions `import_medpc()`, `fcsrt_read_file()`, `fcsrt_read()`, `fcsrt_prep()`, `fcsrt_pivot()`, `rgt_read_file()`, `rgt_read()`, `rgt_prep()`, and `rgt_pivot()`.
 

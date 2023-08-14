@@ -1,3 +1,17 @@
+# Copyright 2023 Craig P. Hutton
+#
+# Licensed under the Apache License, Version 2.0 (the “License”); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at:
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
 #' theme_crgt
 #'
 #' This is a custom \href{https://ggplot2.tidyverse.org/}{ggplot2} theme for the
@@ -12,6 +26,8 @@
 #' @importFrom ggplot2 element_line
 #' @importFrom ggplot2 unit
 #' @importFrom ggplot2 margin
+#' @importFrom ggplot2 "%+replace%"
+#' @importFrom ggplot2 rel
 #'
 #' @param base_size base font size, given in pts.
 #' @param base_family base font family
@@ -33,7 +49,7 @@ theme_crgt <- function(base_size = 16, base_family = "sans", base_line_size = ba
       # plotting components
       panel.border = ggplot2::element_rect(fill = NA, colour = "grey20", size = 1),
       panel.grid = ggplot2::element_line(colour = "grey85"),
-      panel.grid.minor = ggplot2::element_line(size = rel(0.5)),
+      panel.grid.minor = ggplot2::element_line(size = ggplot2::rel(0.5)),
       legend.key = ggplot2::element_rect(fill = "white", colour = NA),
       # panel.grid.minor = ggplot2::element_blank(),
       # panel.grid.major =  ggplot2::element_line(color = "black"),
@@ -45,22 +61,22 @@ theme_crgt <- function(base_size = 16, base_family = "sans", base_line_size = ba
       # remove strip background
       # adjust the margins of plots and remove axis ticks
       plot.margin = ggplot2::margin(0.5, 1, 0.5, 1, unit = "cm"),
-      legend.title = ggplot2::element_text(face = "bold", size = rel(1.33)),
-      legend.text = ggplot2::element_text(face = "bold", size = rel(1.2)),
+      legend.title = ggplot2::element_text(face = "bold", size = ggplot2::rel(1.33)),
+      legend.text = ggplot2::element_text(face = "bold", size = ggplot2::rel(1.2)),
       # axis.ticks = element_blank(),
       # change text family, size, and adjust position of titles
-      text = ggplot2::element_text(family = text_family, size = base_size),
-      axis.text = ggplot2::element_text(face = "bold", color = "black", size = rel(1.33)),
+      text = ggplot2::element_text(family = base_family, size = base_size),
+      axis.text = ggplot2::element_text(face = "bold", color = "black", size = ggplot2::rel(1.33)),
       axis.ticks.length = ggplot2::unit(base_size/3, "pt"),
       axis.ticks = ggplot2::element_line(size = base_size/15),
-      axis.title = ggplot2::element_text(face = "bold", size = rel(1.5)),
+      axis.title = ggplot2::element_text(face = "bold", size = ggplot2::rel(1.5)),
       axis.title.x = ggplot2::element_text(margin = ggplot2::margin(0.5, 0, 0, 0, unit = "cm")),
       axis.title.y = ggplot2::element_text(margin = ggplot2::margin(0, 0.5, 0, 0, unit = "cm"), angle=90),
-      plot.title = ggplot2::element_text(face = "bold", size = rel(1.67), hjust = 0),
+      plot.title = ggplot2::element_text(face = "bold", size = ggplot2::rel(1.67), hjust = 0),
       plot.title.position = "plot",
-      plot.subtitle = ggplot2::element_text(face = "bold", size = rel(1.3), margin = ggplot2::margin(1, 0, 0.5, 0, unit = "cm"), hjust = 0.1),
+      plot.subtitle = ggplot2::element_text(face = "bold", size = ggplot2::rel(1.3), margin = ggplot2::margin(1, 0, 0.5, 0, unit = "cm"), hjust = 0.1),
       plot.caption = ggplot2::element_text(size = 10, margin = margin(1, 0, 0, 0, unit = "cm"), hjust = 1),
-      strip.text = ggplot2::element_text(size = rel(1.3), face = "bold", margin = ggplot2::margin(0.25, 0.25, 0.25, 0.25, unit = "cm")),
+      strip.text = ggplot2::element_text(size = ggplot2::rel(1.3), face = "bold", margin = ggplot2::margin(0.25, 0.25, 0.25, 0.25, unit = "cm")),
       strip.background = ggplot2::element_rect(fill = "grey90", colour = "black", size = 2),
       complete = TRUE,
       ...
