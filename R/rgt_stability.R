@@ -93,11 +93,6 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
     dplyr::select(subject, choice, session_beta, session_se, session_OR, OR_CI_lower, OR_CI_upper) |>
     tibble::as_tibble()
 
-  if(sort) {
-    random_slope_CIs <- random_slope_CIs |>
-      dplyr::mutate(subject = as.numeric(subject)) |> #assumes subject IDs are numeric
-      dplyr::arrange(subject, choice)
-  }
   return(random_slope_CIs)
 }
 
