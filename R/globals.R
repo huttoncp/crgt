@@ -25,4 +25,10 @@ utils::globalVariables(c("session", "start_date", "session_date", "n_trials", "s
                          "times_chosen", "choice_prop", "P1", "P2", "P3", "P4", "choice_score",
                          "choice_lat_P1", "choice_lat_P2", "choice_lat_P3", "choice_lat_P4",
                          "%+replace%", "rel", "text_family",
-                         "choice", "condval", "condsd", "term", "grp", "grpvar", "OR", "OR_LB", "OR_UB", "unstable"))
+                         "choice", "condval", "condsd", "term", "grp", "grpvar", "unstable",
+                         "premature_time", "chosen_iti_dur", "iti_dur_p1", "iti_dur_p4",
+                         "mean_choice_iti", "mean_premat_time", "dd_phenotype", "across", "top_choice",
+                         "preferred_choice", "stable_preference", "model", "SE",
+                         "session.trend", "session_trend_fe", "session_trend_re", "se_fe", "se_re",
+                         "session_beta", "session_se", "session_ci_lower", "session_ci_upper",
+                         "session_OR", "OR_CI_lower", "OR_CI_upper"))

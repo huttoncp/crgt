@@ -43,8 +43,7 @@ A data frame containing 5CSRT data with the following columns
 }
 \description{
 Read a raw MedPC (Tatham & Zurn, 1989) data file from the 5 choice serial
-reaction time task (5CSRT; Robbins, 2002) and convert it into an R data.table
-with an option to export the data to a Microsoft Excel file.
+reaction time task (5CSRT; Robbins, 2002) and convert it into an R data.table.
 }
 \references{
 Robbins, T. (2002). The 5-choice serial reaction time task: behavioural

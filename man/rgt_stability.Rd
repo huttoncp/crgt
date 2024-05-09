@@ -9,17 +9,25 @@ rgt_stability(
   n_sessions = 5,
   alpha = 0.05,
   diagnostics = TRUE,
-  n_sim = 1000
+  n_sim = 1000,
+  residual_plot = FALSE,
+  stable_colour = "#149c4d",
+  unstable_colour = "purple2",
+  other_colour = "black",
+  reference_line_colour = "blue2"
 )
 }
 \arguments{
 \item{.rgt_df}{A data frame of session-aggregated data from the cued or
-uncued Rat Gambling Task. That has been parsed by \code{\link[=rgt_read]{rgt_read()}} or
-\code{\link[=rgt_read_file]{rgt_read_file()}} and aggregated by session using \code{\link[=rgt_prep]{rgt_prep()}}.}
+uncued Rat Gambling Task that has been parsed by any of the *read()
+functions in this package (such as \code{\link[=rgt_read]{rgt_read()}}) and aggregated by session
+using the matching *prep() function (such as \code{\link[=rgt_prep]{rgt_prep()}}). N.B. This
+function assumes that subject IDs are numeric.}
 
 \item{n_sessions}{you may not have enough data to evaluate stability at the
-individual rat level (random effects) if using fewer than 5 sessions of
-data.}
+individual rat level (requires random slopes) if using fewer than 5
+sessions of data. To evaluate stability using fewer than 5 sessions of RGT
+data, use \code{\link[=rgt_rm_aov]{rgt_rm_aov()}} instead.}
 
 \item{alpha}{Statistical significance level for p-values. Default is 0.05.}
 
@@ -29,6 +37,23 @@ is TRUE.}
 
 \item{n_sim}{Number of simulations to use for diagnostic evaluation of model
 fit via \code{\link[DHARMa:simulateResiduals]{DHARMa::simulateResiduals()}}. Default is 1,000.}
+
+\item{residual_plot}{Set to TRUE if you want the residual diagnostic plot to
+be generated as this function is executed, which may slow things down a
+bit. You can generate the plot afterwards if you store the output and then
+pass the sim_resid component to the plot() function.}
+
+\item{stable_colour}{The colour to use to represent rats flagged as stable on
+their preferred choice option in the random slopes plot.}
+
+\item{unstable_colour}{The colour to use to represent rats flagged as
+unstable on their preferred choice option in the random slopes plot.}
+
+\item{other_colour}{The colour to use to represent each rat's non-preferred
+choice options in the random slopes plot.}
+
+\item{reference_line_colour}{The colour to use for the odds-ratio reference
+line (at 1) in the random slopes plot.}
 }
 \value{
 A list containing the following objects:
@@ -36,9 +61,9 @@ A list containing the following objects:
 \itemize{
 \item \strong{data:} A tibble (enhanced data frame) of the data used to fit the stability evaluation model
 \item \strong{model:} The logistic GLMM used to evaluate choice preference stability fit with \code{\link[glmmTMB:glmmTMB]{glmmTMB::glmmTMB()}}
-\item \strong{sim_resid:} Simulated model residuals using \code{\link[DHARMa:simulateResiduals]{DHARMa::simulateResiduals()}}. Can be graphed with plot().
+\item \strong{sim_resid:} Simulated model residuals using \code{\link[DHARMa:simulateResiduals]{DHARMa::simulateResiduals()}}. Can be graphed with plot() and evaluated with other DHARMa package functions.
 \item \strong{anova:} Analysis of Variance for the model fixed effects using type III SS and sum-to-zero factor contrasts
-\item \strong{random_slopes:} random slope coefficients and distribution metrics
+\item \strong{random_slopes:} subject/choice-specific session coefficients and distribution metrics
 \item \strong{random_slopes_plot:} ggplot2 graph of the random slopes for the effect of session for each subject facetted by choice option
 \item \strong{posthoc_interaction:} Estimated marginal means and post-hoc pairwise contrasts statistics for the difference in linear session trends between choice options (only included if session x choice fixed effect interaction is significant)
 \item \strong{posthoc_interaction_plot:} ggplot2 graph of the linear session trends for each choice option (only included if session x choice fixed effect interaction is significant)
@@ -61,10 +86,10 @@ Where the dependent variable on the left-hand side, "choice_prop", is the
 proportion of trials in which the rat chose a particular option ("choice"
 variable), considered to represent its "preference" for that option. Because
 this is a proportion out of a known total number of trials, we use a logistic
-model for it by setting family = "binomial" for \code{\link[glmmTMB:glmmTMB]{glmmTMB::glmmTMB()}}, which
-is the function we use to fit the model. \code{\link[glmmTMB:glmmTMB]{glmmTMB::glmmTMB()}} is preferred
-over \code{\link[lme4:glmer]{lme4::glmer()}} because it tends to converge more often with fewer
-warning/error messages in my experience.
+model for it by setting family = "binomial", and weights = n_trials, for
+\code{\link[glmmTMB:glmmTMB]{glmmTMB::glmmTMB()}}, which is the function we use to fit the model.
+\code{\link[glmmTMB:glmmTMB]{glmmTMB::glmmTMB()}} is preferred over \code{\link[lme4:glmer]{lme4::glmer()}} because it tends to
+converge more often with fewer warning/error messages in my experience.
 
 Choice preference stability can be evaluated at a whole-sample level by
 examining the statistical significance of the fixed effect terms "session"
@@ -73,7 +98,24 @@ side of the model formula. The stability of RGT choice preferences for each
 rat can be evaluated by examining the random slope parameters, or the
 "(session | subject/choice)" part of the model formula, where we want to see
 if there is a change in choice preference across sessions for each choice
-option presented to each subject.
+option presented to each subject. This function currently categorizes rats as
+"stable" or "unstable" depending upon whether or not the confidence interval
+for the odds ratio of the random slope coefficient that represents the extent
+to which their choice preference varies across sessions, overlaps with 1 for
+their preferred choice. I.e., this is intended to indicate whether or not the
+rat has a stable preference.
+
+N.B. the subject x choice estimates for the change across sessions provided
+by this function use the combined fixed effect and random effect coefficients
+and their standard errors. While the point estimates (coefficients) should be
+accurate, this approach assumes that the random effect variances and fixed
+effect variances are independent, which may not be the case, as discussed
+\href{https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#confidence-intervals-on-conditional-meansblupsrandom-effects:~:text=Getting\%20the\%20uncertainty\%20of,intercept\%20for\%20each\%20group}{here}.
+
+When I have time, I will attempt to use either a Bayesian or bootstrapping
+approach to estimate the random slope confidence intervals to see how
+reasonable this assumption is, as recommended
+\href{https://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-for-each-unit-in-an-lme-model-f#:~:text=Two\%20alternatives\%20would,the\%20bootstrap\%20distributions.}{here}.
 }
 \references{
 Barrus, M.M., & Winstanley, C.A. (2016). Dopamine D3 receptors modulate the
@@ -83,4 +125,7 @@ Journal of Neuroscience, 36(3), 785-794.
 Zeeb, F.D., Robbins, T.W., & Winstanley, C.A. (2009). Serotonergic and
 dopaminergic modulation of gambling behavior as assessed using a novel rat
 gambling task. Neuropsychopharmacology, 34(10), 2329-2343.
+}
+\author{
+Craig P. Hutton, \email{craig.hutton@gmail.com}
 }

@@ -1,6 +1,17 @@
+# crgt 0.0.1.9003 - May 9th, 2024
+
+* Updated `rgt_stability()` to use the correct subject- and choice-specific slope coefficients to derive estimates of the individual-level odds ratios for change across sessions, rather than the un-adjusted random slope coefficients from the model (obtained via `ranef()`) which represent the deviations from the marginal fixed effect session slopes for each choice option (i.e. the raw values represent deviations from the fixed effect slopes for the change in choice preferences across sessions). Note that this approach should yield much more meaningful point estimates for the change in each rat's choice preferences across sessions to evaluate individual-level stability. However, the standard errors and confidence intervals obtained this way (to construct the error bars) assume that the random slope and fixed effect slope variances are independent of one another, which may not be the case, as discussed [here](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#confidence-intervals-on-conditional-meansblupsrandom-effects:~:text=Getting%20the%20uncertainty%20of,intercept%20for%20each%20group). When I have time, I will attempt to use either a Bayesian or bootstrapping approach to estimate the random effect coefficient standard errors to see how reasonable this assumption is, as recommended [here]( https://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-for-each-unit-in-an-lme-model-f#:~:text=Two%20alternatives%20would,the%20bootstrap%20distributions).
+
+* Integrated the `translate()`, `mode()`, and `wash_df()` functions from the [elucidate](https://bcgov.github.io/elucidate/) package so that it could be removed as a dependency.
+
+* Added new functions: `iti9_read_file()`, `iti9_read()`, `iti9_prep()`, and `iti9_pivot()` to support processing of MedPC data files from the variation of the cued (or uncued) rat gambling task that uses a 9-second intertrial interval and tracks a few additional measures.
+
+* Added new functions: `ddrgt_read_file()`, `ddrgt_read()`, `ddrgt_prep()`, and `ddrgt_pivot()` to support processing of MedPC data files from the delay-discounting variation of the cued (or uncued) rat gambling task.
+
+
 # crgt 0.0.1.9002 - August 14th, 2023
 
-* Added a new function, `rgt_stability()`, which uses a logistic mixed effects model to check if subjects' choice preferences are stable across the last *n* sessions of the rat gambling task. The default is to check for stability across the past 5 sessions, but this can be adjusted by the user via the "n_sessions" argument. The inclusion of both fixed and random slope effects for the change in choice preference over time (session variable), enables an evaluation of stability for the sample as a whole (fixed effect term for the interaction between choice and session) vs. stability for each individual subject (random slopes for the effect of session clustered by subject). 
+* Added a new function, `rgt_stability()`, which uses a logistic mixed effects model to check if subjects' choice preferences are stable across the last *n* sessions of the rat gambling task. The default is to check for stability across the past 5 sessions, but this can be adjusted by the user via the "n_sessions" argument. The inclusion of both fixed and random slope effects for the change in choice preference over time (session variable), enables an evaluation of stability for the sample as a whole (fixed effect term for the interaction between choice and session) vs. stability for each individual subject (random slopes for the effect of session clustered by subject and choice option). 
 
 * Updated documentation and license information.
 

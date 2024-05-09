@@ -63,5 +63,5 @@ pharmacology and functional neurochemistry. Psychopharmacology, 163(3),
 362-380.
 }
 \seealso{
-\code{\link[tidyr:pivot_wider]{tidyr::pivot_wider()}}, \code{\link[tidyr:pivot_longer]{tidyr::pivot_longer()}}
+\link[tidyr]{pivot_wider}, \link[tidyr]{pivot_longer}
 }

@@ -2,8 +2,8 @@
 % Please edit documentation in R/crgt.R
 \docType{package}
 \name{crgt}
-\alias{crgt}
 \alias{crgt-package}
+\alias{crgt}
 \title{"crgt: data processing and analysis for the cued Rat Gambling Task."}
 \description{
 "This package provides functions for processing and analysis of operant

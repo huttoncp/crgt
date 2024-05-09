@@ -1,7 +1,7 @@
 Package: crgt
 Type: Package
 Title: Data processing and analysis for the cued Rat Gambling Task
-Version: 0.0.1.9002
+Version: 0.0.1.9003
 Author: c(person("Craig", "Hutton", email = "craig.hutton@gmail.com", role = c("aut", "cre", "cph")), person("Melanie", "Lysenko-Martin", email = "melaniel@student.ubc.ca", role = "ctb"))
 Maintainer: Craig P. Hutton <craig.hutton@gmail.com>
 Description: Processing and analysis of operant behavioural data for the cued and uncued versions of the Rat Gambling Task (RGT) and the cRGT training version of the five choice serial reaction time task. Provides functions to parse raw Med PC data files, pivot them between long and wide formats, and perform common analyses for these behavioural tasks as used in the Winstanley laboratory at the University of British Columbia. This package aims to facilitate reproducible and standardized analysis of RGT data.
@@ -11,7 +11,7 @@ LazyData: true
 URL: https://github.com/huttoncp/crgt
 BugReports: https://github.com/crgt/issues
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Depends: R (>= 4.1.0)
 Imports:
     data.table (>= 1.14.8),
@@ -26,8 +26,9 @@ Imports:
     tibble (>= 3.2.1),
     tidyr (>= 1.3.0),
     tidyselect(>= 1.2.0),
-    elucidate (>= 0.1.1.9001),
+    janitor(>= 1.2.0),
     glmmTMB (>= 1.1.7),
     DHARMa (>= 0.4.6),
     car (>= 3.1-2),
-    emmeans (>= 1.8.7)
+    emmeans (>= 1.8.7),
+    afex (>= 1.3-1)
