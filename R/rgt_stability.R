@@ -71,11 +71,11 @@
 #'
 #' @noRd
 extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3) {
-  session_choice_fe <- emmeans::emtrends(model, ~choice, var = "session") |>
+  session_choice_fe <- emmeans::emtrends(.stability_model, ~choice, var = "session") |>
     as.data.frame() |>
     dplyr::select(choice, session_trend_fe = session.trend, se_fe = SE)
 
-  session_choice_re <- as.data.frame(glmmTMB::ranef(model, condVar=TRUE)) |>
+  session_choice_re <- as.data.frame(glmmTMB::ranef(.stability_model, condVar=TRUE)) |>
     dplyr::rename(beta = condval) |>
     dplyr::filter(grpvar == "choice:subject", term == "session") |>
     tidyr::separate(grp, into = c("choice", "subject"), sep = ":") |>
