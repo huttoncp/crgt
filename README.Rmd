@@ -41,7 +41,9 @@ This package is currently maintained by [Craig P. Hutton](https://craig.rbind.io
 
 -   An `rgt_pivot()` and `fcsrt_pivot()` pair of functions that make it easy to [pivot](https://tidyr.tidyverse.org/articles/pivot.html) the session-aggregated forms of RGT and 5CSRT data prepared by the `rgt_prep()` and `fcsrt_prep()` functions between long[^1] and wide[^2] formats. This should make RGT and 5CSRT data processing easy for both R users (who usually need the long form) and users of other programs like SPSS (who usually need the wide form).
 
--   An `rgt_stability()` function which checks the last several (default is 5) sessions of RGT data, previously aggregated using `rgt_prep()`, to see if rats' choice preferences are stable.
+-   An `rgt_stability()` function which checks the last several (default is 5) sessions of RGT data, previously aggregated using `rgt_prep()`, to see if rats' choice preferences are stable, both at a group level and at an individual level.
+
+-   An `rgt_rm_aov()` function which checks for sample-level stability using a repeated measures ANOVA.
 
 -   A [ggplot2 theme](https://ggplot2.tidyverse.org/reference/index.html#themes) to support visualization of cRGT/5CSRT data, `theme_crgt()`, that is similar to [ggplot2::theme_bw()](https://ggplot2.tidyverse.org/reference/ggtheme.html) but with larger default text font and line sizes.
 
@@ -54,8 +56,8 @@ This package is currently maintained by [Craig P. Hutton](https://craig.rbind.io
 You can install the development version of crgt from [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("huttoncp/crgt")
+# install.packages("remotes")
+remotes::install_github("huttoncp/crgt")
 ```
 
 The authors of `crgt` acknowledge and express their gratitude to Gary Kane, the author of the [rmedpc::import_medpc()](https://github.com/gkane26/rmedpc) function, and the authors of the other dependency packages which were used to build `crgt`, without whose prior work this package would not exist.
@@ -70,7 +72,7 @@ To suggest changes or code improvements, please submit a [pull request](https://
 
 ## License
 
-Copyright 2023 Craig P. Hutton
+Copyright 2024 Craig P. Hutton
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

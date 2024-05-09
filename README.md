@@ -69,7 +69,11 @@ which rats are typically trained on prior to the RGT.
 
 - An `rgt_stability()` function which checks the last several (default
   is 5) sessions of RGT data, previously aggregated using `rgt_prep()`,
-  to see if rats’ choice preferences are stable.
+  to see if rats’ choice preferences are stable, both at a group level
+  and at an individual level.
+
+- An `rgt_rm_aov()` function which checks for sample-level stability
+  using a repeated measures ANOVA.
 
 - A [ggplot2
   theme](https://ggplot2.tidyverse.org/reference/index.html#themes) to
@@ -84,8 +88,8 @@ You can install the development version of crgt from
 [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("huttoncp/crgt")
+# install.packages("remotes")
+remotes::install_github("huttoncp/crgt")
 ```
 
 The authors of `crgt` acknowledge and express their gratitude to Gary
@@ -109,7 +113,7 @@ request](https://github.com/huttoncp/crgt/pulls).
 
 ## License
 
-Copyright 2023 Craig P. Hutton
+Copyright 2024 Craig P. Hutton
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
