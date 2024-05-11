@@ -536,7 +536,7 @@ iti9_read_file <- function(path = "") {
   ivec <- increment*0:(len-1)
 
   out <- data.table::data.table(msn = med_pc_raw$MSN,
-                                start_date = lubridate::mdy(med_pc_raw$`Start Date`),
+                                start_date = med_pc_raw$`Start Date`,
                                 start_time = med_pc_raw$`Start Time`,
                                 subject = med_pc_raw$Subject,
                                 group = med_pc_raw$Group,
@@ -793,7 +793,7 @@ ddrgt_read_file <- function(path = "") {
   ivec <- increment*0:(len-1)
 
   out <- data.table::data.table(msn = med_pc_raw$MSN,
-                                start_date = lubridate::mdy(med_pc_raw$`Start Date`),
+                                start_date = med_pc_raw$`Start Date`,
                                 start_time = med_pc_raw$`Start Time`,
                                 subject = med_pc_raw$Subject,
                                 group = med_pc_raw$Group,

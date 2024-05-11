@@ -13,19 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-# mode ------------------------------------------------------------------
+
+# mcv (internal) ----------------------------------------------------------
 #' @title
-#' Obtain the mode of a vector.
+#' Obtain the most common value (mode) of a vector.
 #'
 #' @description
-#' \code{mode} returns the mode AKA most common value rounded to 3 decimal
+#' \code{mcv} returns the mode AKA most common value rounded to 3 decimal
 #' places if y is a numeric vector. If y is non-numeric the most common value is
 #' returned as a character string. For additional unique values of y sorted by
-#' decreasing frequency, use counts() instead. N.B. this function overwrites a
-#' base R function mode() with the same name that is a convenience shortcut used
-#' to specify the storage mode of an object. However, this conflict isn't much
-#' of an issue because that alternative function can still be accessed using the
-#' full function name = "storage.mode()".
+#' decreasing frequency, use counts() instead.
 #'
 #' @importFrom stats na.omit
 #'
@@ -45,15 +42,15 @@
 #' @examples
 #' y <- c(1:100, 2, 2, 4, 5, 6, 25, 50)
 #'
-#' mode(y) #returns the mode
+#' mcv(y) #returns the mode
 #'
-#' mode(y, inv = TRUE) #returns the anti-mode
+#' mcv(y, inv = TRUE) #returns the anti-mode
 #
 #' @references
 #' Code was obtained from \href{https://github.com/bcgov/elucidate/blob/main/R/miscellaneous.R}{https://github.com/bcgov/elucidate/blob/main/R/miscellaneous.R}
 #'
-#' @export
-mode <- function(y, digits = 3, inv = FALSE, na.rm = TRUE){
+#' @noRd
+mcv <- function(y, digits = 3, inv = FALSE, na.rm = TRUE){
   if(na.rm == TRUE) {
     y <- na.omit(y)
   }
@@ -76,7 +73,8 @@ mode <- function(y, digits = 3, inv = FALSE, na.rm = TRUE){
   return(out)
 }
 
-# translate --------------------------------------------------------------
+
+# translate (internal) ----------------------------------------------------
 #' @title Recode a variable using a matched pair of vectors.
 #'
 #' @description Recode a variable using a pair of vectors matched by row (i.e. a
@@ -124,13 +122,14 @@ mode <- function(y, digits = 3, inv = FALSE, na.rm = TRUE){
 #' @references
 #' Code was obtained from \href{https://github.com/bcgov/elucidate/blob/main/R/miscellaneous.R}{https://github.com/bcgov/elucidate/blob/main/R/miscellaneous.R}
 #'
-#' @export
+#' @noRd
 translate <- function(y, old, new) {
   out <- new[match(y, old)]
   return(out)
 }
 
-# wash_df --------------------------------------------------------------------
+
+# wash_df (internal) ------------------------------------------------------
 #' @title clean up a data frame by parsing/updating column classes.
 #'
 #' @description Clean up a data frame by parsing/updating column classes,
@@ -216,7 +215,7 @@ translate <- function(y, old, new) {
 #' @references
 #' Code was obtained from \href{https://github.com/bcgov/elucidate/blob/main/R/miscellaneous.R}{https://github.com/bcgov/elucidate/blob/main/R/miscellaneous.R}
 #'
-#' @export
+#' @noRd
 wash_df <- function(data, clean_names = TRUE, case = "snake",
                     remove_empty = TRUE, remove_which = c("rows", "cols"),
                     parse = TRUE, guess_integer = FALSE, na = c("", "NA"),

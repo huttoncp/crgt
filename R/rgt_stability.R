@@ -99,14 +99,14 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
 # rgt stability assessment ------------------------------------------------
 #' Check if rats' choice preferences are stable across recent sessions of the Rat Gambling Task (RGT)
 #'
-#' Use a logistic mixed effects model to check if rats' choice preferences are
-#' stable across the last "n" (5 by default) sessions of the cued (Barrus &
-#' Winstanley, 2016) or uncued (Zeeb et al., 2009) version of the rat gambling
-#' task (RGT) that has been parsed by [rgt_read()] or [rgt_read_file()] and
-#' aggregated by session using [rgt_prep()], in the long format (default
-#' format).
+#' Use either a logistic generalized mixed effects model (GLMM; the default), or
+#' a repeated measures ANOVA, to check if rats' choice preferences are stable
+#' across the last "n" (5 by default) sessions of the cued (Barrus & Winstanley,
+#' 2016) or uncued (Zeeb et al., 2009) version of the rat gambling task (RGT)
+#' that has been parsed by [rgt_read()] or [rgt_read_file()] and aggregated by
+#' session using [rgt_prep()], in the long format (default format).
 #'
-#' The [formula](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#model-specification) for the model is:
+#' The \href{https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#model-specification}{formula} for the model in lme4 syntax is:
 #'
 #' choice_prop ~ session + choice + session:choice + (session | subject/choice)
 #'
@@ -119,19 +119,30 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
 #' [glmmTMB::glmmTMB()] is preferred over [lme4::glmer()] because it tends to
 #' converge more often with fewer warning/error messages in my experience.
 #'
-#' Choice preference stability can be evaluated at a whole-sample level by
-#' examining the statistical significance of the fixed effect terms "session"
-#' and "session:choice" (the session by choice interaction) on the right-hand
-#' side of the model formula. The stability of RGT choice preferences for each
-#' rat can be evaluated by examining the random slope parameters, or the
-#' "(session | subject/choice)" part of the model formula, where we want to see
-#' if there is a change in choice preference across sessions for each choice
-#' option presented to each subject. This function currently categorizes rats as
-#' "stable" or "unstable" depending upon whether or not the confidence interval
-#' for the odds ratio of the random slope coefficient that represents the extent
-#' to which their choice preference varies across sessions, overlaps with 1 for
-#' their preferred choice. I.e., this is intended to indicate whether or not the
-#' rat has a stable preference.
+#' The classical approach to evaluating choice stability in RGT data has been to
+#' instead use a repeated-measures ANOVA on the arcsine-transformed choice
+#' preference data with session and choice as within-subjects factors (e.g.,
+#' Zeeb et al., 2009). This approach can be used by setting the "method" argument
+#' of this function to "rm_aov". This traditional approach enables evaluation of
+#' stability at a group or whole-sample level only (depending on whether or
+#' not the "between" argument is used to specify a between subjects factor to
+#' include in the analysis, such as sex if you have data on both male and female
+#' rats).
+#'
+#' For the GLMM approach (method = "glmm"), choice preference stability can be
+#' evaluated at a whole-sample level (or group-level if a between-subjects
+#' factor is specified) by examining the statistical significance of the fixed
+#' effect terms "session" and "session:choice" (the session by choice
+#' interaction) on the right-hand side of the model formula. The stability of
+#' RGT choice preferences for each rat can be evaluated by examining the random
+#' slope parameters, or the "(session | subject/choice)" part of the model
+#' formula, where we want to see if there is a change in choice preference
+#' across sessions for each choice option presented to each subject. This
+#' function currently categorizes each rat as "stable" or "unstable" depending upon
+#' whether or not the confidence interval for the odds ratio of the random slope
+#' coefficient that represents the extent to which their choice preference
+#' varies across sessions, overlaps with 1 for their preferred choice. I.e.,
+#' this is intended to indicate whether or not the rat has a stable preference.
 #'
 #' N.B. the subject x choice estimates for the change across sessions provided
 #' by this function use the combined fixed effect and random effect coefficients
@@ -142,8 +153,30 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
 #'
 #' When I have time, I will attempt to use either a Bayesian or bootstrapping
 #' approach to estimate the random slope confidence intervals to see how
-#' reasonable this assumption is, as recommended
+#' reasonable this assumption is for the GLMM approach, as recommended
 #' \href{https://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-for-each-unit-in-an-lme-model-f#:~:text=Two%20alternatives%20would,the%20bootstrap%20distributions.}{here}.
+#'
+#' The GLMM approach is primarily preferred in cases where: (a) you are
+#' interested in evaluating individual-level stability, (b) you have missing
+#' data for some subjects for some of the sessions (so the data you do have for
+#' those rats can still be analysed), (c) when you have unequal sample sizes
+#' across levels of a between-subjects factor that has been included (e.g. fewer
+#' females than males), (d) you have at least 5 sessions of data, and/or (e) if
+#' you want to accurately model the data generation process (which is
+#' binomial in nature). The repeated-measures ANOVA approach to evaluating
+#' stability may be preferred in cases where: (a) you don't have enough data to
+#' get the GLMM to converge, (b) you only care about group-level stability, have
+#' no missing data, and have equal sample sizes, and/or (c) you are trying to
+#' replicate a prior analysis of choice preference stability for an RGT study
+#' that was done using a repeated-measures ANOVA. In case you are wondering, the
+#' arcsine transformation for proportional data is no longer considered best
+#' statistical practice (MacDonald, 2009). Current guidance to use logistic
+#' regression instead is one of the reasons why "glmm" is the default method
+#' used by this function.
+#'
+#' N.B. Both approaches use Type III Sums of Squares and sum-to-zero contrasts
+#' for nominal variables (factors), which is what popular commercial statistical
+#' programs like SPSS also use.
 #'
 #' @importFrom stringr str_remove
 #' @importFrom stringr str_which
@@ -176,6 +209,9 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
 #' @importFrom ggplot2 labs
 #' @importFrom ggplot2 coord_flip
 #' @importFrom ggplot2 theme_bw
+#' @importFrom afex aov_car
+#' @importFrom stats as.formula
+#' @importFrom stats contrasts
 #'
 #' @param .rgt_df A data frame of session-aggregated data from the cued or
 #'   uncued Rat Gambling Task that has been parsed by any of the *read()
@@ -185,36 +221,64 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
 #'
 #' @param n_sessions you may not have enough data to evaluate stability at the
 #'   individual rat level (requires random slopes) if using fewer than 5
-#'   sessions of data. To evaluate stability using fewer than 5 sessions of RGT
-#'   data, use [rgt_rm_aov()] instead.
+#'   sessions of data (using method = "glmm"). To evaluate stability using fewer
+#'   than 5 sessions of RGT data, use method = "rm_aov" instead.
 #'
-#' @param alpha Statistical significance level for p-values. Default is 0.05.
+#' @param method Modelling approach to use to evaluate stability. The default,
+#'   "glmm", fits a logitisic mixed effects model with the formula specified in
+#'   the description above to enable evaluation of choice stability across
+#'   sessions at both a group-level and an individual-level. The "rm_aov" option
+#'   instead uses a repeated-measures ANOVA on the arcsine-transformed choice
+#'   preference values, which is the classical approach used to evaluate
+#'   group-level stability in RGT analysis, and can be useful if you have fewer
+#'   than 5 sessions of data (or the glmm model fails to converge).
+#'
+#' @param between The name of a between-subjects factor (as a character string)
+#'   to include as a fixed effect covariate in the model (optional). This can be
+#'   useful, for example, if the data contain observations from both male and
+#'   female rats, in which case you might specify between = "sex"; or between =
+#'   "group" if the groups were specified in MedPC at the time of data
+#'   collection.
+#'
+#' @param observed If a factor name is specified for the between argument
+#'   (above), then use this to indicate whether or not the factor is observed or
+#'   manipulated (TRUE or FALSE), to enable correct calculation of the "between"
+#'   variable's effect size. This distinction is only used for method = "rm_aov"
+#'   (i.e., ignored if method = "glmm"). Under the assumption that the between
+#'   argument will most often be used to incorporate sex as a covariate in an
+#'   analysis, the default value is set to TRUE, because sex is observed, not
+#'   manipulated. See [afex::aov_car] for details.
 #'
 #' @param diagnostics Should model diagnostic checks be performed using
 #'   simulated residuals via [DHARMa::simulateResiduals()] (TRUE/FALSE)? Default
-#'   is TRUE.
+#'   is TRUE. Only applicable for method = "glmm" ("rm_aov" method runs its own
+#'   built-in diagnostics via [afex::aov_car()]).
 #'
 #' @param n_sim Number of simulations to use for diagnostic evaluation of model
-#'   fit via [DHARMa::simulateResiduals()]. Default is 1,000.
+#'   fit via [DHARMa::simulateResiduals()]. Default is 1,000. Only applicable
+#'   for method = "glmm".
 #'
 #' @param residual_plot Set to TRUE if you want the residual diagnostic plot to
 #'   be generated as this function is executed, which may slow things down a
 #'   bit. You can generate the plot afterwards if you store the output and then
-#'   pass the sim_resid component to the plot() function.
+#'   pass the sim_resid component to the plot() function. Only applicable for
+#'   method = "glmm".
 #'
 #' @param stable_colour The colour to use to represent rats flagged as stable on
-#'   their preferred choice option in the random slopes plot.
+#'   their preferred choice option in the random slopes plot. Only applicable
+#'   for method = "glmm".
 #'
 #' @param unstable_colour The colour to use to represent rats flagged as
-#'   unstable on their preferred choice option in the random slopes plot.
+#'   unstable on their preferred choice option in the random slopes plot. Only
+#'   applicable for method = "glmm".
 #'
 #' @param other_colour The colour to use to represent each rat's non-preferred
-#'   choice options in the random slopes plot.
+#'   choice options in the random slopes plot. Only applicable for method = "glmm".
 #'
 #' @param reference_line_colour The colour to use for the odds-ratio reference
-#'   line (at 1) in the random slopes plot.
+#'   line (at 1) in the random slopes plot. Only applicable for method = "glmm".
 #'
-#' @return A list containing the following objects:
+#' @return For method = "glmm", a list containing the following objects:
 #'
 #' \itemize{
 #'   \item **data:** A tibble (enhanced data frame) of the data used to fit the stability evaluation model
@@ -227,6 +291,9 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
 #'   \item **posthoc_interaction_plot:** ggplot2 graph of the linear session trends for each choice option (only included if session x choice fixed effect interaction is significant)
 #' }
 #'
+#' For method = "rm_aov", an afex_aov object is returned that prints an ANOVA
+#' summary table to the console. For details, see [afex::aov_car()].
+#'
 #' @references
 #' Barrus, M.M., & Winstanley, C.A. (2016). Dopamine D3 receptors modulate the
 #' ability of win-paired cues to increase risky choice in a rat gambling task.
@@ -236,15 +303,22 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
 #' dopaminergic modulation of gambling behavior as assessed using a novel rat
 #' gambling task. Neuropsychopharmacology, 34(10), 2329-2343.
 #'
+#' McDonald, J. H. (2009). Handbook of biological statistics (Vol. 2, pp. 6-59).
+#' Baltimore, MD: sparky house publishing. URL: \href{https://www.biostathandbook.com/transformation.html}{https://www.biostathandbook.com/transformation.html}
+#'
 #' @author Craig P. Hutton, \email{craig.hutton@@gmail.com}
 #'
 #' @export
-rgt_stability <- function(.rgt_df, n_sessions = 5, alpha = 0.05,
+rgt_stability <- function(.rgt_df, n_sessions = 5,
+                          method = c("glmm", "rm_aov"), between = NULL, observed = TRUE,
                           diagnostics = TRUE, n_sim = 1000, residual_plot = FALSE,
                           stable_colour = "#149c4d", unstable_colour = "purple2", other_colour = "black",
                           reference_line_colour = "blue2") {
 
+  method <- match.arg(method)
   names(.rgt_df) <- stringr::str_remove(names(.rgt_df), "choice_prop_")
+
+  if(method == "glmm") {
 
   preferred_choices <- .rgt_df |>
     dplyr::arrange(subject, session_date) |>
@@ -265,7 +339,6 @@ rgt_stability <- function(.rgt_df, n_sessions = 5, alpha = 0.05,
                                         sort(unique(session_date)),
                                         seq_along(sort(unique(session_date))))) |>
       dplyr::filter(session > (max(session) - n_sessions)) |>
-      dplyr::select(subject, session, n_trials, P1:P4) |>
       tidyr::pivot_longer(cols = P1:P4,
                           names_to = "choice", values_to = "choice_prop") |>
       dplyr::mutate(choice = factor(choice, levels = c("P1", "P2", "P3", "P4"))) |>
@@ -275,11 +348,25 @@ rgt_stability <- function(.rgt_df, n_sessions = 5, alpha = 0.05,
   .res <- list()
   .res[["data"]] <- tibble::as_tibble(.rgt_df)
 
-  .m <- suppressWarnings(glmmTMB::glmmTMB(choice_prop ~ session*choice +
-                                            (1 + session | subject/choice),
-                                          family = "binomial", weights = n_trials,
-                                          data = .rgt_df,
-                                          contrasts = list(choice = "named.contr.sum")))
+  if(missing(between)) {
+
+    stats::contrasts(.rgt_df[["choice"]]) <- "named.contr.sum"
+
+    .m <- suppressWarnings(glmmTMB::glmmTMB(choice_prop ~ session*choice +
+                                              (1 + session | subject/choice),
+                                            family = "binomial", weights = n_trials,
+                                            data = .rgt_df))
+  } else {
+    .rgt_df[[between]] <- as.factor(.rgt_df[[between]])
+
+    stats::contrasts(.rgt_df[[between]]) <- "named.contr.sum"
+    stats::contrasts(.rgt_df[["choice"]]) <- "named.contr.sum"
+
+    .formula <- stats::as.formula(stringr::str_glue("choice_prop ~ session*choice*{between} + (1 + session | subject/choice)"))
+    .m <- suppressWarnings(glmmTMB::glmmTMB(.formula,
+                                            family = "binomial", weights = n_trials,
+                                            data = .rgt_df))
+  }
   .res[["model"]] <- .m
 
   if(diagnostics == TRUE){
@@ -336,7 +423,7 @@ rgt_stability <- function(.rgt_df, n_sessions = 5, alpha = 0.05,
     message(stringr::str_glue("random slopes suggest that choice preference is unstable for {n_unstable} subjects"))
   }
 
-  if(p_vals[stringr::str_which(.terms, "^session:choice$")[1]] < alpha) {
+  if(p_vals[stringr::str_which(.terms, "^session:choice$")[1]] < 0.05) {
     message("session by choice interaction (fixed effect interaction) IS significant")
     .res[["posthoc_interaction"]] <-  emmeans::emtrends(.res[["model"]], pairwise ~ choice,
                                                         var = "session", regrid = "response",
@@ -350,66 +437,27 @@ rgt_stability <- function(.rgt_df, n_sessions = 5, alpha = 0.05,
   } else {
     message("session by choice interaction (fixed effect interaction) is NOT significant")
   }
-
+  } else {
+    .rgt_df <- .rgt_df |>
+      dplyr::filter(session > max(session) - n_sessions) |>
+      dplyr::arrange(subject, session) |>
+      dplyr::mutate(session = 1:n_sessions, .by = subject) |>
+      tidyr::pivot_longer(cols = P1:P4,
+                          names_to = "choice", values_to = "choice_prop") |>
+      dplyr::mutate(choice = factor(choice, levels = c("P1", "P2", "P3", "P4"))) |>
+      dplyr::mutate(session = as.numeric(as.character(session)),
+                    subject = factor(subject, levels = sort(unique(subject), decreasing = TRUE)),
+                    choice_prop = asin(sqrt(choice_prop)))
+    if(missing(between)) {
+      .res <- afex::aov_car(choice_prop ~ session*choice + Error(subject/(session*choice)), data = .rgt_df)
+    } else {
+      .formula <- stats::as.formula(stringr::str_glue("choice_prop ~ session*choice + {between} + Error(subject/(session*choice))"))
+      if(observed == TRUE) {
+        .res <- afex::aov_car(.formula, observed = between, factorize = FALSE, data = .rgt_df)
+      } else {
+        .res <- afex::aov_car(.formula, factorize = FALSE, data = .rgt_df)
+      }
+    }
+  }
   return(.res)
-}
-
-#' Check if rats' choice preferences are stable across recent sessions of the Rat Gambling Task (RGT)
-#'
-#' Use a repeated measures ANOVA to check if rats' choice preferences are stable
-#' across the last "n" (5 by default) sessions of the cued (Barrus & Winstanley,
-#' 2016) or uncued (Zeeb et al., 2009) version of the rat gambling task (RGT)
-#' that has been parsed by [rgt_read()] or [rgt_read_file()] and aggregated by
-#' session using [rgt_prep()], in the long format (default format). In this
-#' approach, the arcsine transformation is first applied to the choice
-#' preference data because it is bounded by 0 and 1 and are actually binomial in nature (preference = # times chosen/total choices; MacDonald, 2009). N.B. this
-#' approach is no longer considered best statistical practice, so this function
-#' is mostly intended to provide a way to check for stability to enable
-#' replication and comparisons to earlier publications. Current best practice is to use a logisitic mixed effects model to evaluate stability via [rgt_stability()]
-#'
-#' Choice preference stability of the sample can be evaluated by examining the
-#' statistical significance of the session by choice interaction term.
-#'
-#' @importFrom dplyr filter
-#' @importFrom dplyr select
-#' @importFrom dplyr mutate
-#' @importFrom dplyr arrange
-#' @importFrom tidyr pivot_longer
-#' @importFrom afex aov_car
-#'
-#' @param .rgt_df A data frame of session-aggregated data from the cued or
-#'   uncued Rat Gambling Task. That has been parsed by [rgt_read()] or
-#'   [rgt_read_file()] and aggregated by session using [rgt_prep()].
-#'
-#' @param n_sessions number of sessions to use to evaluate stability (default = 5).
-#'
-#' @return A repeated measures ANOVA results table
-#'
-#' @references
-#' Barrus, M.M., & Winstanley, C.A. (2016). Dopamine D3 receptors modulate the
-#' ability of win-paired cues to increase risky choice in a rat gambling task.
-#' Journal of Neuroscience, 36(3), 785-794.
-#'
-#' Zeeb, F.D., Robbins, T.W., & Winstanley, C.A. (2009). Serotonergic and
-#' dopaminergic modulation of gambling behavior as assessed using a novel rat
-#' gambling task. Neuropsychopharmacology, 34(10), 2329-2343.
-#'
-#' McDonald, J. H. (2009). Handbook of biological statistics (Vol. 2, pp. 6-59).
-#' Baltimore, MD: sparky house publishing. URL: https://www.biostathandbook.com/transformation.html
-#'
-#' @export
-rgt_rm_aov <- function(.rgt_df, n_sessions = 5) {
-  .rgt_df <- .rgt_df |>
-    dplyr::filter(session > max(session) - n_sessions) |>
-    dplyr::arrange(subject, session) |>
-    dplyr::mutate(session = 1:n_sessions) |>
-    dplyr::select(subject, session, n_trials, P1:P4) |>
-    tidyr::pivot_longer(cols = P1:P4,
-                        names_to = "choice", values_to = "choice_prop") |>
-    dplyr::mutate(choice = factor(choice, levels = c("P1", "P2", "P3", "P4"))) |>
-    dplyr::mutate(session = as.numeric(as.character(session)),
-                  subject = factor(subject, levels = sort(unique(subject), decreasing = TRUE)),
-                  choice_prop = asin(sqrt(choice_prop)))
-  out <- afex::aov_car(choice_prop ~ session*choice + Error(subject/(session*choice)), data = .rgt_df)
-  return(out)
 }

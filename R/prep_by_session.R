@@ -127,7 +127,7 @@ fcsrt_prep <- function(.df, shape = c("long", "wide"), output_file = NULL,
                                            stim_dur == 20 ~ 2,
                                            stim_dur == 10 ~ 3),
                   correct = dplyr::if_else(chosen == offered, 1, 0)) |>
-    dplyr::mutate(session_date = as.Date(mode(session_date, na.rm = TRUE)),
+    dplyr::mutate(session_date = as.Date(mcv(session_date, na.rm = TRUE)),
                   n_correct = sum(correct, na.rm = TRUE),
                   n_trials = sum(!is.na(offered)),
                   total_choices = round(max(trial, na.rm = TRUE)),
@@ -354,7 +354,7 @@ rgt_prep <- function(.df, shape = c("long", "wide"),
   #premature responding & total trials
   premature_by_session <- .df |>
     dplyr::select(subject, session_date, session, trial, premature_resp) |>
-    dplyr::summarise(session_date = as.Date(mode(session_date, na.rm = TRUE)),
+    dplyr::summarise(session_date = as.Date(mcv(session_date, na.rm = TRUE)),
                      n_trials = sum(!is.na(trial)),
                      premat_n = sum(premature_resp, na.rm = TRUE),
                      premat_prop = round(premat_n/n_trials, 4),
@@ -653,7 +653,7 @@ iti9_prep <- function(.df, shape = c("long", "wide"),
   #premature responding & total trials
   premature_by_session <- .df |>
     dplyr::select(subject, session_date, session, trial, premature_resp) |>
-    dplyr::summarise(session_date = as.Date(mode(session_date, na.rm = TRUE)),
+    dplyr::summarise(session_date = as.Date(mcv(session_date, na.rm = TRUE)),
                      n_trials = sum(!is.na(trial)),
                      premat_n = sum(premature_resp, na.rm = TRUE),
                      premat_prop = round(premat_n/n_trials, 4),
@@ -961,7 +961,7 @@ ddrgt_prep <- function(.df, shape = c("long", "wide"),
   #premature responding & total trials
   premature_by_session <- .df |>
     dplyr::select(subject, session_date, session, trial, premature_resp, premature_time) |>
-    dplyr::summarise(session_date = as.Date(mode(session_date, na.rm = TRUE)),
+    dplyr::summarise(session_date = as.Date(mcv(session_date, na.rm = TRUE)),
                      n_trials = sum(!is.na(trial)),
                      premat_n = sum(premature_resp, na.rm = TRUE),
                      premat_prop = round(premat_n/n_trials, 4),

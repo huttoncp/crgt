@@ -1,3 +1,11 @@
+# crgt 0.0.1.9004 - May 11th, 2024
+
+* Updated `rgt_stability()` to provide users with the option to evaluate group-level stability using the classical approach of a repeated-measures ANOVA on arcsine-transformed data. The analysis approach ("glmm" or "rm_aov") can be specified via a new "method" argument. 
+
+* `rgt_stability()` now also has a "between" argument that allows users to specify a between-subjects factor to include as a fixed effect in the analysis. This could be useful if you have data for both male and female rats, for example.
+
+* Internalized the [elucidate](https://bcgov.github.io/elucidate/) functions added in the last update and changed the name of `mode()` to `mcv()` (for most common value) to prevent the naming conflict message from appearing in the console when the package is loaded.
+
 # crgt 0.0.1.9003 - May 9th, 2024
 
 * Updated `rgt_stability()` to use the correct subject- and choice-specific slope coefficients to derive estimates of the individual-level odds ratios for change across sessions, rather than the un-adjusted random slope coefficients from the model (obtained via `ranef()`) which represent the deviations from the marginal fixed effect session slopes for each choice option (i.e. the raw values represent deviations from the fixed effect slopes for the change in choice preferences across sessions). Note that this approach should yield much more meaningful point estimates for the change in each rat's choice preferences across sessions to evaluate individual-level stability. However, the standard errors and confidence intervals obtained this way (to construct the error bars) assume that the random slope and fixed effect slope variances are independent of one another, which may not be the case, as discussed [here](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#confidence-intervals-on-conditional-meansblupsrandom-effects:~:text=Getting%20the%20uncertainty%20of,intercept%20for%20each%20group). When I have time, I will attempt to use either a Bayesian or bootstrapping approach to estimate the random effect coefficient standard errors to see how reasonable this assumption is, as recommended [here]( https://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-for-each-unit-in-an-lme-model-f#:~:text=Two%20alternatives%20would,the%20bootstrap%20distributions).

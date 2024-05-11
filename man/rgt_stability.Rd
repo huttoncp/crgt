@@ -7,7 +7,9 @@
 rgt_stability(
   .rgt_df,
   n_sessions = 5,
-  alpha = 0.05,
+  method = c("glmm", "rm_aov"),
+  between = NULL,
+  observed = TRUE,
   diagnostics = TRUE,
   n_sim = 1000,
   residual_plot = FALSE,
@@ -26,37 +28,65 @@ function assumes that subject IDs are numeric.}
 
 \item{n_sessions}{you may not have enough data to evaluate stability at the
 individual rat level (requires random slopes) if using fewer than 5
-sessions of data. To evaluate stability using fewer than 5 sessions of RGT
-data, use \code{\link[=rgt_rm_aov]{rgt_rm_aov()}} instead.}
+sessions of data (using method = "glmm"). To evaluate stability using fewer
+than 5 sessions of RGT data, use method = "rm_aov" instead.}
 
-\item{alpha}{Statistical significance level for p-values. Default is 0.05.}
+\item{method}{Modelling approach to use to evaluate stability. The default,
+"glmm", fits a logitisic mixed effects model with the formula specified in
+the description above to enable evaluation of choice stability across
+sessions at both a group-level and an individual-level. The "rm_aov" option
+instead uses a repeated-measures ANOVA on the arcsine-transformed choice
+preference values, which is the classical approach used to evaluate
+group-level stability in RGT analysis, and can be useful if you have fewer
+than 5 sessions of data (or the glmm model fails to converge).}
+
+\item{between}{The name of a between-subjects factor (as a character string)
+to include as a fixed effect covariate in the model (optional). This can be
+useful, for example, if the data contain observations from both male and
+female rats, in which case you might specify between = "sex"; or between =
+"group" if the groups were specified in MedPC at the time of data
+collection.}
+
+\item{observed}{If a factor name is specified for the between argument
+(above), then use this to indicate whether or not the factor is observed or
+manipulated (TRUE or FALSE), to enable correct calculation of the "between"
+variable's effect size. This distinction is only used for method = "rm_aov"
+(i.e., ignored if method = "glmm"). Under the assumption that the between
+argument will most often be used to incorporate sex as a covariate in an
+analysis, the default value is set to TRUE, because sex is observed, not
+manipulated. See \link[afex:aov_car]{afex::aov_car} for details.}
 
 \item{diagnostics}{Should model diagnostic checks be performed using
 simulated residuals via \code{\link[DHARMa:simulateResiduals]{DHARMa::simulateResiduals()}} (TRUE/FALSE)? Default
-is TRUE.}
+is TRUE. Only applicable for method = "glmm" ("rm_aov" method runs its own
+built-in diagnostics via \code{\link[afex:aov_car]{afex::aov_car()}}).}
 
 \item{n_sim}{Number of simulations to use for diagnostic evaluation of model
-fit via \code{\link[DHARMa:simulateResiduals]{DHARMa::simulateResiduals()}}. Default is 1,000.}
+fit via \code{\link[DHARMa:simulateResiduals]{DHARMa::simulateResiduals()}}. Default is 1,000. Only applicable
+for method = "glmm".}
 
 \item{residual_plot}{Set to TRUE if you want the residual diagnostic plot to
 be generated as this function is executed, which may slow things down a
 bit. You can generate the plot afterwards if you store the output and then
-pass the sim_resid component to the plot() function.}
+pass the sim_resid component to the plot() function. Only applicable for
+method = "glmm".}
 
 \item{stable_colour}{The colour to use to represent rats flagged as stable on
-their preferred choice option in the random slopes plot.}
+their preferred choice option in the random slopes plot. Only applicable
+for method = "glmm".}
 
 \item{unstable_colour}{The colour to use to represent rats flagged as
-unstable on their preferred choice option in the random slopes plot.}
+unstable on their preferred choice option in the random slopes plot. Only
+applicable for method = "glmm".}
 
 \item{other_colour}{The colour to use to represent each rat's non-preferred
-choice options in the random slopes plot.}
+choice options in the random slopes plot. Only applicable for method = "glmm".}
 
 \item{reference_line_colour}{The colour to use for the odds-ratio reference
-line (at 1) in the random slopes plot.}
+line (at 1) in the random slopes plot. Only applicable for method = "glmm".}
 }
 \value{
-A list containing the following objects:
+For method = "glmm", a list containing the following objects:
 
 \itemize{
 \item \strong{data:} A tibble (enhanced data frame) of the data used to fit the stability evaluation model
@@ -68,17 +98,20 @@ A list containing the following objects:
 \item \strong{posthoc_interaction:} Estimated marginal means and post-hoc pairwise contrasts statistics for the difference in linear session trends between choice options (only included if session x choice fixed effect interaction is significant)
 \item \strong{posthoc_interaction_plot:} ggplot2 graph of the linear session trends for each choice option (only included if session x choice fixed effect interaction is significant)
 }
+
+For method = "rm_aov", an afex_aov object is returned that prints an ANOVA
+summary table to the console. For details, see \code{\link[afex:aov_car]{afex::aov_car()}}.
 }
 \description{
-Use a logistic mixed effects model to check if rats' choice preferences are
-stable across the last "n" (5 by default) sessions of the cued (Barrus &
-Winstanley, 2016) or uncued (Zeeb et al., 2009) version of the rat gambling
-task (RGT) that has been parsed by \code{\link[=rgt_read]{rgt_read()}} or \code{\link[=rgt_read_file]{rgt_read_file()}} and
-aggregated by session using \code{\link[=rgt_prep]{rgt_prep()}}, in the long format (default
-format).
+Use either a logistic generalized mixed effects model (GLMM; the default), or
+a repeated measures ANOVA, to check if rats' choice preferences are stable
+across the last "n" (5 by default) sessions of the cued (Barrus & Winstanley,
+2016) or uncued (Zeeb et al., 2009) version of the rat gambling task (RGT)
+that has been parsed by \code{\link[=rgt_read]{rgt_read()}} or \code{\link[=rgt_read_file]{rgt_read_file()}} and aggregated by
+session using \code{\link[=rgt_prep]{rgt_prep()}}, in the long format (default format).
 }
 \details{
-The \href{https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#model-specification}{formula} for the model is:
+The \href{https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#model-specification}{formula} for the model in lme4 syntax is:
 
 choice_prop ~ session + choice + session:choice + (session | subject/choice)
 
@@ -91,19 +124,30 @@ model for it by setting family = "binomial", and weights = n_trials, for
 \code{\link[glmmTMB:glmmTMB]{glmmTMB::glmmTMB()}} is preferred over \code{\link[lme4:glmer]{lme4::glmer()}} because it tends to
 converge more often with fewer warning/error messages in my experience.
 
-Choice preference stability can be evaluated at a whole-sample level by
-examining the statistical significance of the fixed effect terms "session"
-and "session:choice" (the session by choice interaction) on the right-hand
-side of the model formula. The stability of RGT choice preferences for each
-rat can be evaluated by examining the random slope parameters, or the
-"(session | subject/choice)" part of the model formula, where we want to see
-if there is a change in choice preference across sessions for each choice
-option presented to each subject. This function currently categorizes rats as
-"stable" or "unstable" depending upon whether or not the confidence interval
-for the odds ratio of the random slope coefficient that represents the extent
-to which their choice preference varies across sessions, overlaps with 1 for
-their preferred choice. I.e., this is intended to indicate whether or not the
-rat has a stable preference.
+The classical approach to evaluating choice stability in RGT data has been to
+instead use a repeated-measures ANOVA on the arcsine-transformed choice
+preference data with session and choice as within-subjects factors (e.g.,
+Zeeb et al., 2009). This approach can be used by setting the "method" argument
+of this function to "rm_aov". This traditional approach enables evaluation of
+stability at a group or whole-sample level only (depending on whether or
+not the "between" argument is used to specify a between subjects factor to
+include in the analysis, such as sex if you have data on both male and female
+rats).
+
+For the GLMM approach (method = "glmm"), choice preference stability can be
+evaluated at a whole-sample level (or group-level if a between-subjects
+factor is specified) by examining the statistical significance of the fixed
+effect terms "session" and "session:choice" (the session by choice
+interaction) on the right-hand side of the model formula. The stability of
+RGT choice preferences for each rat can be evaluated by examining the random
+slope parameters, or the "(session | subject/choice)" part of the model
+formula, where we want to see if there is a change in choice preference
+across sessions for each choice option presented to each subject. This
+function currently categorizes each rat as "stable" or "unstable" depending upon
+whether or not the confidence interval for the odds ratio of the random slope
+coefficient that represents the extent to which their choice preference
+varies across sessions, overlaps with 1 for their preferred choice. I.e.,
+this is intended to indicate whether or not the rat has a stable preference.
 
 N.B. the subject x choice estimates for the change across sessions provided
 by this function use the combined fixed effect and random effect coefficients
@@ -114,8 +158,30 @@ effect variances are independent, which may not be the case, as discussed
 
 When I have time, I will attempt to use either a Bayesian or bootstrapping
 approach to estimate the random slope confidence intervals to see how
-reasonable this assumption is, as recommended
+reasonable this assumption is for the GLMM approach, as recommended
 \href{https://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-for-each-unit-in-an-lme-model-f#:~:text=Two\%20alternatives\%20would,the\%20bootstrap\%20distributions.}{here}.
+
+The GLMM approach is primarily preferred in cases where: (a) you are
+interested in evaluating individual-level stability, (b) you have missing
+data for some subjects for some of the sessions (so the data you do have for
+those rats can still be analysed), (c) when you have unequal sample sizes
+across levels of a between-subjects factor that has been included (e.g. fewer
+females than males), (d) you have at least 5 sessions of data, and/or (e) if
+you want to accurately model the data generation process (which is
+binomial in nature). The repeated-measures ANOVA approach to evaluating
+stability may be preferred in cases where: (a) you don't have enough data to
+get the GLMM to converge, (b) you only care about group-level stability, have
+no missing data, and have equal sample sizes, and/or (c) you are trying to
+replicate a prior analysis of choice preference stability for an RGT study
+that was done using a repeated-measures ANOVA. In case you are wondering, the
+arcsine transformation for proportional data is no longer considered best
+statistical practice (MacDonald, 2009). Current guidance to use logistic
+regression instead is one of the reasons why "glmm" is the default method
+used by this function.
+
+N.B. Both approaches use Type III Sums of Squares and sum-to-zero contrasts
+for nominal variables (factors), which is what popular commercial statistical
+programs like SPSS also use.
 }
 \references{
 Barrus, M.M., & Winstanley, C.A. (2016). Dopamine D3 receptors modulate the
@@ -125,6 +191,9 @@ Journal of Neuroscience, 36(3), 785-794.
 Zeeb, F.D., Robbins, T.W., & Winstanley, C.A. (2009). Serotonergic and
 dopaminergic modulation of gambling behavior as assessed using a novel rat
 gambling task. Neuropsychopharmacology, 34(10), 2329-2343.
+
+McDonald, J. H. (2009). Handbook of biological statistics (Vol. 2, pp. 6-59).
+Baltimore, MD: sparky house publishing. URL: \href{https://www.biostathandbook.com/transformation.html}{https://www.biostathandbook.com/transformation.html}
 }
 \author{
 Craig P. Hutton, \email{craig.hutton@gmail.com}
