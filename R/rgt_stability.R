@@ -439,6 +439,9 @@ rgt_stability <- function(.rgt_df, n_sessions = 5,
   }
   } else {
     .rgt_df <- .rgt_df |>
+      dplyr::mutate(session = translate(session_date,
+                                        sort(unique(session_date)),
+                                        seq_along(sort(unique(session_date))))) |>
       dplyr::filter(session > max(session) - n_sessions) |>
       dplyr::arrange(subject, session) |>
       dplyr::mutate(session = translate(session_date,
