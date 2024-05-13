@@ -441,7 +441,9 @@ rgt_stability <- function(.rgt_df, n_sessions = 5,
     .rgt_df <- .rgt_df |>
       dplyr::filter(session > max(session) - n_sessions) |>
       dplyr::arrange(subject, session) |>
-      dplyr::mutate(session = 1:n_sessions, .by = subject) |>
+      dplyr::mutate(session = translate(session_date,
+                                        sort(unique(session_date)),
+                                        seq_along(sort(unique(session_date))))) |>
       tidyr::pivot_longer(cols = P1:P4,
                           names_to = "choice", values_to = "choice_prop") |>
       dplyr::mutate(choice = factor(choice, levels = c("P1", "P2", "P3", "P4"))) |>
