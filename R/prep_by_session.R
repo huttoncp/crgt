@@ -93,8 +93,7 @@ fcsrt_prep <- function(.df, shape = c("long", "wide"), output_file = NULL,
       dplyr::arrange(subject, session_date) |>
       dplyr::mutate(session = translate(session_date,
                                         sort(unique(session_date)),
-                                        seq_along(sort(unique(session_date)))),
-                    .by = subject)
+                                        seq_along(sort(unique(session_date)))))
   }
 
   df_fcsrt_premature <- .df  |>
@@ -347,8 +346,7 @@ rgt_prep <- function(.df, shape = c("long", "wide"),
       dplyr::arrange(subject, session_date) |>
       dplyr::mutate(session = translate(session_date,
                                         sort(unique(session_date)),
-                                        seq_along(sort(unique(session_date)))),
-                    .by = subject)
+                                        seq_along(sort(unique(session_date)))))
   }
 
   #premature responding & total trials
@@ -646,8 +644,7 @@ iti9_prep <- function(.df, shape = c("long", "wide"),
       dplyr::arrange(subject, session_date) |>
       dplyr::mutate(session = translate(session_date,
                                         sort(unique(session_date)),
-                                        seq_along(sort(unique(session_date)))),
-                    .by = subject)
+                                        seq_along(sort(unique(session_date)))))
   }
 
   #premature responding & total trials
@@ -954,8 +951,7 @@ ddrgt_prep <- function(.df, shape = c("long", "wide"),
       dplyr::arrange(subject, session_date) |>
       dplyr::mutate(session = translate(session_date,
                                         sort(unique(session_date)),
-                                        seq_along(sort(unique(session_date)))),
-                    .by = subject)
+                                        seq_along(sort(unique(session_date)))))
   }
 
   #premature responding & total trials

@@ -322,10 +322,7 @@ rgt_stability <- function(.rgt_df, n_sessions = 5,
 
   preferred_choices <- .rgt_df |>
     dplyr::arrange(subject, session_date) |>
-    dplyr::mutate(session = translate(session_date,
-                                      sort(unique(session_date)),
-                                      seq_along(sort(unique(session_date))))) |>
-    dplyr::filter(session > (max(session) - 5)) |>
+    dplyr::filter(session > (max(session) - n_sessions)) |>
     dplyr::summarise(dplyr::across(P1:P4, ~mean(.x, na.rm = TRUE)), .by = subject) |>
     dplyr::rowwise() |>
     dplyr::mutate(top_choice = which.max(dplyr::c_across(P1:P4)),
@@ -334,10 +331,6 @@ rgt_stability <- function(.rgt_df, n_sessions = 5,
     dplyr::select(subject, top_choice)
 
     .rgt_df <- .rgt_df |>
-      dplyr::arrange(subject, session_date) |>
-      dplyr::mutate(session = translate(session_date,
-                                        sort(unique(session_date)),
-                                        seq_along(sort(unique(session_date))))) |>
       dplyr::filter(session > (max(session) - n_sessions)) |>
       tidyr::pivot_longer(cols = P1:P4,
                           names_to = "choice", values_to = "choice_prop") |>
@@ -385,7 +378,7 @@ rgt_stability <- function(.rgt_df, n_sessions = 5,
   .terms <- rownames(.aov[-1,])
 
   .res[["random_slopes"]] <- extract_random_slopes(.m) |>
-    dplyr::left_join(dplyr::mutate(preferred_choice, subject = as.character(subject)), by = "subject") |>
+    dplyr::left_join(dplyr::mutate(preferred_choices, subject = as.character(subject)), by = "subject") |>
     dplyr::mutate(OR_ref = 1,
                   stable_preference = dplyr::case_when(choice == top_choice & dplyr::between(OR_ref, OR_CI_lower, OR_CI_upper) ~ "Yes",
                                                        choice == top_choice & !dplyr::between(OR_ref, OR_CI_lower, OR_CI_upper) ~ "No",
@@ -456,7 +449,7 @@ rgt_stability <- function(.rgt_df, n_sessions = 5,
     if(missing(between)) {
       .res <- afex::aov_car(choice_prop ~ session*choice + Error(subject/(session*choice)), data = .rgt_df)
     } else {
-      .formula <- stats::as.formula(stringr::str_glue("choice_prop ~ session*choice + {between} + Error(subject/(session*choice))"))
+      .formula <- stats::as.formula(stringr::str_glue("choice_prop ~ session*choice*{between} + Error(subject/(session*choice))"))
       if(observed == TRUE) {
         .res <- afex::aov_car(.formula, observed = between, factorize = FALSE, data = .rgt_df)
       } else {
