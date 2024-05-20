@@ -1,7 +1,7 @@
 Package: crgt
 Type: Package
 Title: Data processing and analysis for the cued Rat Gambling Task
-Version: 0.0.1.9004
+Version: 0.0.1.9005
 Author: c(person("Craig", "Hutton", email = "craig.hutton@gmail.com", role = c("aut", "cre", "cph")), person("Melanie", "Lysenko-Martin", email = "melaniel@student.ubc.ca", role = "ctb"))
 Maintainer: Craig P. Hutton <craig.hutton@gmail.com>
 Description: Processing and analysis of operant behavioural data for the cued and uncued versions of the Rat Gambling Task (RGT) and the cRGT training version of the five choice serial reaction time task. Provides functions to parse raw Med PC data files, pivot them between long and wide formats, and perform common analyses for these behavioural tasks as used in the Winstanley laboratory at the University of British Columbia. This package aims to facilitate reproducible and standardized analysis of RGT data.

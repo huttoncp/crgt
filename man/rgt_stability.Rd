@@ -156,10 +156,11 @@ accurate, this approach assumes that the random effect variances and fixed
 effect variances are independent, which may not be the case, as discussed
 \href{https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#confidence-intervals-on-conditional-meansblupsrandom-effects:~:text=Getting\%20the\%20uncertainty\%20of,intercept\%20for\%20each\%20group}{here}.
 
-When I have time, I will attempt to use either a Bayesian or bootstrapping
-approach to estimate the random slope confidence intervals to see how
-reasonable this assumption is for the GLMM approach, as recommended
-\href{https://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-for-each-unit-in-an-lme-model-f#:~:text=Two\%20alternatives\%20would,the\%20bootstrap\%20distributions.}{here}.
+This assumption is reasonable for modelling individual stability using RGT
+data according to the high degree of overlap that was observed when comparing
+the above method against the equivalent Bayesian approach to estimating the
+random slope 95\% credible intervals (which does provide the combined standard
+errors).
 
 The GLMM approach is primarily preferred in cases where: (a) you are
 interested in evaluating individual-level stability, (b) you have missing

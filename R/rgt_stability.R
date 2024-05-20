@@ -25,13 +25,10 @@
 #' by this function use the combined fixed effect and random effect coefficients
 #' and their standard errors. While the point estimates (coefficients) should be
 #' accurate, this approach assumes that the random effect variances and fixed
-#' effect variances are independent, which may not be the case, as discussed
-#' \href{https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#confidence-intervals-on-conditional-meansblupsrandom-effects:~:text=Getting%20the%20uncertainty%20of,intercept%20for%20each%20group}{here}.
-#'
-#' When I have time, I will attempt to use either a Bayesian or bootstrapping
-#' approach to estimate the random slope confidence intervals to see how
-#' reasonable this assumption is, as recommended
-#' \href{https://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-for-each-unit-in-an-lme-model-f#:~:text=Two%20alternatives%20would,the%20bootstrap%20distributions.}{here}.
+#' effect variances are independent, which is a reasonable assumption for
+#' modelling stability using RGT data as the standard errors obtained this was
+#' align closely with estimates obtained from equivalent bayesian models (which
+#' don't require the same assumption).
 #'
 #' @importFrom emmeans emtrends
 #' @importFrom glmmTMB ranef
@@ -41,8 +38,11 @@
 #' @importFrom dplyr mutate
 #' @importFrom dplyr arrange
 #' @importFrom dplyr left_join
+#' @importFrom dplyr join_by
+#' @importFrom tidyselect contains
 #' @importFrom tidyr separate
 #' @importFrom stats qnorm
+#' @importFrom stats coef
 #' @importFrom tibble as_tibble
 #'
 #' @param .stability_model An across-session stability model for cued or uncued
@@ -71,24 +71,32 @@
 #'
 #' @noRd
 extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3) {
-  session_choice_fe <- emmeans::emtrends(.stability_model, ~choice, var = "session") |>
-    as.data.frame() |>
-    dplyr::select(choice, session_trend_fe = session.trend, se_fe = SE)
 
-  session_choice_re <- as.data.frame(glmmTMB::ranef(.stability_model, condVar=TRUE)) |>
+  re_coefs <- stats::coef(.stability_model)$cond$`choice:subject` |>
+    tibble::rownames_to_column("term") |>
+    wash_df() |> dplyr::select(term, tidyselect::contains("session")) |>
+    tidyr::separate(term, into = c("choice", "subject"), sep = ":") |>
+    dplyr::mutate(subject = as.numeric(subject)) |>
+    dplyr::select(choice, subject, session_trend_re = session)
+
+  session_fe_slope <- as.data.frame(summary(.stability_model)$coefficients$cond) |>
+    tibble::rownames_to_column("term") |>
+    dplyr::filter(term == "session") |> _$`Std. Error`[1]
+
+  re_SEs <- as.data.frame(glmmTMB::ranef(.stability_model, condVar=TRUE)) |>
     dplyr::rename(beta = condval) |>
     dplyr::filter(grpvar == "choice:subject", term == "session") |>
     tidyr::separate(grp, into = c("choice", "subject"), sep = ":") |>
-    dplyr::select(subject, choice, session_trend_re = beta, se_re = condsd)
+    dplyr::mutate(subject = as.numeric(subject)) |>
+    dplyr::select(subject, choice, se_re = condsd) |>
+    dplyr::mutate(se_re = se_re + session_fe_slope)
 
-  random_slope_CIs <- dplyr::left_join(session_choice_re, session_choice_fe, by = "choice") |>
-    dplyr::mutate(session_beta = session_trend_fe + session_trend_re,
-                  session_se = se_fe + se_re,
-                  session_ci_lower = session_beta - session_se*stats::qnorm(1-((1 - ci_level)/2)),
-                  session_ci_upper = session_beta + session_se*stats::qnorm(1-((1 - ci_level)/2)),
+  random_slope_CIs <- dplyr::left_join(re_coefs, re_SEs, by = dplyr::join_by(choice, subject)) |>
+    dplyr::mutate(session_beta = session_trend_re,
+                  session_se = se_re,
                   session_OR = exp(session_beta),
-                  OR_CI_lower = exp(session_ci_lower),
-                  OR_CI_upper = exp(session_ci_upper)) |>
+                  OR_CI_lower = exp(session_beta - session_se*stats::qnorm(1-((1 - ci_level)/2))),
+                  OR_CI_upper = exp(session_beta + session_se*stats::qnorm(1-((1 - ci_level)/2)))) |>
     dplyr::mutate(across(c(session_beta, session_se, session_OR, OR_CI_lower, OR_CI_upper), ~round(.x, digits = digits))) |>
     dplyr::select(subject, choice, session_beta, session_se, session_OR, OR_CI_lower, OR_CI_upper) |>
     tibble::as_tibble()
@@ -151,10 +159,11 @@ extract_random_slopes <- function(.stability_model, ci_level = 0.95, digits = 3)
 #' effect variances are independent, which may not be the case, as discussed
 #' \href{https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#confidence-intervals-on-conditional-meansblupsrandom-effects:~:text=Getting%20the%20uncertainty%20of,intercept%20for%20each%20group}{here}.
 #'
-#' When I have time, I will attempt to use either a Bayesian or bootstrapping
-#' approach to estimate the random slope confidence intervals to see how
-#' reasonable this assumption is for the GLMM approach, as recommended
-#' \href{https://stackoverflow.com/questions/26198958/extracting-coefficients-and-their-standard-error-for-each-unit-in-an-lme-model-f#:~:text=Two%20alternatives%20would,the%20bootstrap%20distributions.}{here}.
+#' This assumption is reasonable for modelling individual stability using RGT
+#' data according to the high degree of overlap that was observed when comparing
+#' the above method against the equivalent Bayesian approach to estimating the
+#' random slope 95% credible intervals (which does provide the combined standard
+#' errors).
 #'
 #' The GLMM approach is primarily preferred in cases where: (a) you are
 #' interested in evaluating individual-level stability, (b) you have missing
@@ -320,15 +329,15 @@ rgt_stability <- function(.rgt_df, n_sessions = 5,
 
   if(method == "glmm") {
 
-  preferred_choices <- .rgt_df |>
-    dplyr::arrange(subject, session_date) |>
-    dplyr::filter(session > (max(session) - n_sessions)) |>
-    dplyr::summarise(dplyr::across(P1:P4, ~mean(.x, na.rm = TRUE)), .by = subject) |>
-    dplyr::rowwise() |>
-    dplyr::mutate(top_choice = which.max(dplyr::c_across(P1:P4)),
-                  top_choice = paste0("P", top_choice)) |>
-    dplyr::ungroup() |>
-    dplyr::select(subject, top_choice)
+    preferred_choices <- .rgt_df |>
+      dplyr::filter(session > (max(session) - n_sessions)) |>
+      dplyr::arrange(subject, session_date) |>
+      dplyr::summarise(dplyr::across(P1:P4, ~mean(.x, na.rm = TRUE)), .by = subject) |>
+      dplyr::rowwise() |>
+      dplyr::mutate(top_choice = which.max(dplyr::c_across(P1:P4)),
+                    top_choice = paste0("P", top_choice)) |>
+      dplyr::ungroup() |>
+      dplyr::select(subject, top_choice)
 
     .rgt_df <- .rgt_df |>
       dplyr::filter(session > (max(session) - n_sessions)) |>
@@ -338,103 +347,97 @@ rgt_stability <- function(.rgt_df, n_sessions = 5,
       dplyr::mutate(session = as.numeric(as.character(session)),
                     subject = factor(subject, levels = sort(unique(subject), decreasing = TRUE)))
 
-  .res <- list()
-  .res[["data"]] <- tibble::as_tibble(.rgt_df)
+    .res <- list()
+    .res[["data"]] <- tibble::as_tibble(.rgt_df)
 
-  if(missing(between)) {
+    if(missing(between)) {
+      stats::contrasts(.rgt_df[["choice"]]) <- "named.contr.sum"
+      .m <- suppressWarnings(glmmTMB::glmmTMB(choice_prop ~ session*choice +
+                                                (1 + session | subject/choice),
+                                              family = "binomial", weights = n_trials,
+                                              data = .rgt_df))
+    } else {
+      .rgt_df[[between]] <- as.factor(.rgt_df[[between]])
+      stats::contrasts(.rgt_df[[between]]) <- "named.contr.sum"
+      stats::contrasts(.rgt_df[["choice"]]) <- "named.contr.sum"
 
-    stats::contrasts(.rgt_df[["choice"]]) <- "named.contr.sum"
+      .formula <- stats::as.formula(stringr::str_glue("choice_prop ~ session*choice*{between} + (1 + session | subject/choice)"))
+      .m <- suppressWarnings(glmmTMB::glmmTMB(.formula,
+                                              family = "binomial", weights = n_trials,
+                                              data = .rgt_df))
+    }
+    .res[["model"]] <- .m
 
-    .m <- suppressWarnings(glmmTMB::glmmTMB(choice_prop ~ session*choice +
-                                              (1 + session | subject/choice),
-                                            family = "binomial", weights = n_trials,
-                                            data = .rgt_df))
-  } else {
-    .rgt_df[[between]] <- as.factor(.rgt_df[[between]])
+    if(diagnostics == TRUE){
+      sim_res <- suppressMessages(DHARMa::simulateResiduals(.m, n_sim))
+      .res[["sim_resid"]] <- sim_res
+    }
+    if(residual_plot == TRUE) {
+      suppressMessages(plot(sim_res))
+    }
 
-    stats::contrasts(.rgt_df[[between]]) <- "named.contr.sum"
-    stats::contrasts(.rgt_df[["choice"]]) <- "named.contr.sum"
+    .aov <- car::Anova(.m, type = "III")
 
-    .formula <- stats::as.formula(stringr::str_glue("choice_prop ~ session*choice*{between} + (1 + session | subject/choice)"))
-    .m <- suppressWarnings(glmmTMB::glmmTMB(.formula,
-                                            family = "binomial", weights = n_trials,
-                                            data = .rgt_df))
-  }
-  .res[["model"]] <- .m
+    .res[["anova"]] <- .aov
 
-  if(diagnostics == TRUE){
-    sim_res <- suppressMessages(DHARMa::simulateResiduals(.m, n_sim))
-    .res[["sim_resid"]] <- sim_res
-  }
-  if(residual_plot == TRUE) {
-    suppressMessages(plot(sim_res))
-  }
+    p_vals <- .aov[-1, 3]
+    .terms <- rownames(.aov[-1,])
 
-  .aov <- car::Anova(.m, type = "III")
+    .res[["random_slopes"]] <- extract_random_slopes(.m) |>
+      dplyr::left_join(dplyr::mutate(preferred_choices, subject = as.numeric(subject)), by = "subject") |>
+      dplyr::mutate(OR_ref = 1,
+                    stable_preference = dplyr::case_when(choice == top_choice & dplyr::between(OR_ref, OR_CI_lower, OR_CI_upper) ~ "Yes",
+                                                         choice == top_choice & !dplyr::between(OR_ref, OR_CI_lower, OR_CI_upper) ~ "No",
+                                                         TRUE ~ "Other"),
+                    .by = subject) |>
+      dplyr::mutate(stable_preference = factor(stable_preference, levels = c("No", "Yes", "Other"))) |>
+      tibble::as_tibble() |>
+      dplyr::mutate(subject = as.numeric(subject)) |>
+      dplyr::arrange(subject)
 
-  .res[["anova"]] <- .aov
+    .res[["random_slopes_plot"]] <- .res[["random_slopes"]] |>
+      dplyr::mutate(choice = forcats::fct_drop(choice),
+                    subject = factor(subject) |>
+                      forcats::fct_rev()) |>
+      ggplot2::ggplot(ggplot2::aes(y = session_OR, x = subject, colour = stable_preference)) +
+      ggplot2::geom_point(size = 2.5) +
+      ggplot2::geom_errorbar(ggplot2::aes(ymin = OR_CI_lower, ymax = OR_CI_upper), linewidth = 1.1) +
+      ggplot2::geom_hline(ggplot2::aes(yintercept = 1), linetype = "dashed",
+                          linewidth = 1.2, alpha = 0.7, colour = reference_line_colour) +
+      ggplot2::facet_wrap(~choice, scales = "free", ncol = 4) + ggplot2::coord_flip() +
+      ggplot2::theme_bw(12) +
+      ggplot2::scale_colour_manual(breaks = c("No", "Yes", "Other"),
+                                   values = c(unstable_colour, stable_colour, other_colour)) +
+      ggplot2::labs(y = "session odds-ratio (95% CI)", colour = "stable preference")
 
-  p_vals <- .aov[-1, 3]
-  .terms <- rownames(.aov[-1,])
+    .res[["unstable_subjects"]] <- .res[["random_slopes"]] |>
+      dplyr::filter(stable_preference == "No") |>
+      dplyr::select(subject, preferred_choice = top_choice, session_OR, OR_CI_lower, OR_CI_upper) |>
+      dplyr::distinct() |>
+      dplyr::mutate(subject = as.numeric(subject)) |>
+      dplyr::arrange(subject)
 
-  .res[["random_slopes"]] <- extract_random_slopes(.m) |>
-    dplyr::left_join(dplyr::mutate(preferred_choices, subject = as.character(subject)), by = "subject") |>
-    dplyr::mutate(OR_ref = 1,
-                  stable_preference = dplyr::case_when(choice == top_choice & dplyr::between(OR_ref, OR_CI_lower, OR_CI_upper) ~ "Yes",
-                                                       choice == top_choice & !dplyr::between(OR_ref, OR_CI_lower, OR_CI_upper) ~ "No",
-                                                       TRUE ~ "Other"),
-                  .by = subject) |>
-    dplyr::mutate(stable_preference = factor(stable_preference, levels = c("No", "Yes", "Other"))) |>
-    tibble::as_tibble() |>
-    dplyr::mutate(subject = as.numeric(subject)) |>
-    dplyr::arrange(subject)
+    if(any(.res[["random_slopes"]]$stable_preference == "No")) {
+      n_unstable <- nrow(.res[["unstable_subjects"]]$subject)
+      message(stringr::str_glue("random slopes suggest that choice preference is unstable for {n_unstable} subjects"))
+    }
 
-  .res[["random_slopes_plot"]] <- .res[["random_slopes"]] |>
-    dplyr::mutate(choice = forcats::fct_drop(choice),
-                  subject = factor(subject) |>
-                    forcats::fct_rev()) |>
-    ggplot2::ggplot(ggplot2::aes(y = session_OR, x = subject, colour = stable_preference)) +
-    ggplot2::geom_point(size = 2.5) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = OR_CI_lower, ymax = OR_CI_upper), linewidth = 1.1) +
-    ggplot2::geom_hline(ggplot2::aes(yintercept = 1), linetype = "dashed",
-                        linewidth = 1.2, alpha = 0.7, colour = reference_line_colour) +
-    ggplot2::facet_wrap(~choice, scales = "free", ncol = 4) + ggplot2::coord_flip() +
-    ggplot2::theme_bw(12) +
-    ggplot2::scale_colour_manual(breaks = c("No", "Yes", "Other"),
-                                 values = c(unstable_colour, stable_colour, other_colour)) +
-    ggplot2::labs(y = "session odds-ratio (95% CI)", colour = "stable preference")
-
-  .res[["unstable_subjects"]] <- .res[["random_slopes"]] |>
-    dplyr::filter(stable_preference == "No") |>
-    dplyr::select(subject, preferred_choice = top_choice, session_OR, OR_CI_lower, OR_CI_upper) |>
-    dplyr::distinct() |>
-    dplyr::mutate(subject = as.numeric(subject)) |>
-    dplyr::arrange(subject)
-
-  if(any(.res[["random_slopes"]]$stable_preference == "No")) {
-    n_unstable <- nrow(.res[["unstable_subjects"]]$subject)
-    message(stringr::str_glue("random slopes suggest that choice preference is unstable for {n_unstable} subjects"))
-  }
-
-  if(p_vals[stringr::str_which(.terms, "^session:choice$")[1]] < 0.05) {
-    message("session by choice interaction (fixed effect interaction) IS significant")
-    .res[["posthoc_interaction"]] <-  emmeans::emtrends(.res[["model"]], pairwise ~ choice,
-                                                        var = "session", regrid = "response",
-                                                        contrasts = TRUE, infer = TRUE)
-    .res[["posthoc_interaction_plot"]] <- plot(.res[["posthoc_interaction"]],
-                                               horizontal = FALSE,
-                                               xlab = "session trend") +
-      ggplot2::geom_vline(ggplot2::aes(xintercept = 0), linetype = "dashed",
-                          linewidth = 1.2, alpha = 0.5, colour = "red2") +
-      ggplot2::theme_bw(12)
-  } else {
-    message("session by choice interaction (fixed effect interaction) is NOT significant")
-  }
+    if(p_vals[stringr::str_which(.terms, "^session:choice$")[1]] < 0.05) {
+      message("session by choice interaction (fixed effect interaction) IS significant")
+      .res[["posthoc_interaction"]] <-  emmeans::emtrends(.res[["model"]], pairwise ~ choice,
+                                                          var = "session", regrid = "response",
+                                                          contrasts = TRUE, infer = TRUE)
+      .res[["posthoc_interaction_plot"]] <- plot(.res[["posthoc_interaction"]],
+                                                 horizontal = FALSE,
+                                                 xlab = "session trend") +
+        ggplot2::geom_vline(ggplot2::aes(xintercept = 0), linetype = "dashed",
+                            linewidth = 1.2, alpha = 0.5, colour = "red2") +
+        ggplot2::theme_bw(12)
+    } else {
+      message("session by choice interaction (fixed effect interaction) is NOT significant")
+    }
   } else {
     .rgt_df <- .rgt_df |>
-      dplyr::mutate(session = translate(session_date,
-                                        sort(unique(session_date)),
-                                        seq_along(sort(unique(session_date))))) |>
       dplyr::filter(session > max(session) - n_sessions) |>
       dplyr::arrange(subject, session) |>
       dplyr::mutate(session = translate(session_date,
