@@ -166,7 +166,8 @@ fcsrt_prep <- function(.df, shape = c("long", "wide"), output_file = NULL,
       dplyr::mutate(session = paste0("s", as.character(session))) |>
       tidyr::pivot_wider(
         names_from = session, values_from = c(session_date, n_trials:tidyselect::last_col()),
-        names_glue = "{.value}_{session}")
+        names_glue = "{.value}_{session}") |>
+      dplyr::arrange(subject)
   }
   df_fcsrt <- wash_df(df_fcsrt)
 
@@ -244,7 +245,8 @@ fcsrt_pivot <- function(.df) {
       tidyr::pivot_wider(
         names_from = session, values_from = c(session_date, n_trials:tidyselect::last_col()),
         names_glue = "{.value}_{session}")
-    out <- wash_df(out)
+    out <- wash_df(out, clean_names = FALSE) |>
+      dplyr::arrange(subject)
   } else {
     out <- .df |>
       tidyr::pivot_longer(cols = c(-subject),
@@ -252,7 +254,8 @@ fcsrt_pivot <- function(.df) {
                           names_pattern = "(.*)_s([0123456789]{0,})") |>
       dplyr::relocate(session_date, .after = subject) |>
       dplyr::filter(!is.na(total_choices))
-    out <- wash_df(out)
+    out <- wash_df(out, clean_names = FALSE) |>
+      dplyr::arrange(subject, session)
   }
   return(out)
 }
@@ -452,7 +455,7 @@ rgt_prep <- function(.df, shape = c("long", "wide"),
   if(shape == "wide") {
     df_all <- df_all |>
       dplyr::mutate(session = paste0("s", as.character(session))) |>
-      tidyr::pivot_wider(names_from = session, values_from = n_trials:mean_collect_lat,
+      tidyr::pivot_wider(names_from = session, values_from = c(session_date, n_trials:tidyselect::last_col()),
                          names_glue = "{.value}_{session}") |>
       dplyr::arrange(subject)
   } else {
@@ -548,7 +551,6 @@ rgt_pivot <- function(.df) {
                           names_pattern = "(.*)_s([0123456789]{0,})") |>
       dplyr::relocate(session_date, .after = subject) |>
       dplyr::filter(!is.na(n_trials))
-
     out <- wash_df(out, clean_names = FALSE) |>
       dplyr::arrange(subject, session)
   }
@@ -751,7 +753,7 @@ iti9_prep <- function(.df, shape = c("long", "wide"),
   if(shape == "wide") {
     df_all <- df_all |>
       dplyr::mutate(session = paste0("s", as.character(session))) |>
-      tidyr::pivot_wider(names_from = session, values_from = n_trials:mean_collect_lat,
+      tidyr::pivot_wider(names_from = session, values_from = c(session_date, n_trials:tidyselect::last_col()),
                          names_glue = "{.value}_{session}") |>
       dplyr::arrange(subject)
   } else {
@@ -847,7 +849,6 @@ iti9_pivot <- function(.df) {
                           names_pattern = "(.*)_s([0123456789]{0,})") |>
       dplyr::relocate(session_date, .after = subject) |>
       dplyr::filter(!is.na(n_trials))
-
     out <- wash_df(out, clean_names = FALSE) |>
       dplyr::arrange(subject, session)
   }
@@ -1071,7 +1072,7 @@ ddrgt_prep <- function(.df, shape = c("long", "wide"),
   if(shape == "wide") {
     df_all <- df_all |>
       dplyr::mutate(session = paste0("s", as.character(session))) |>
-      tidyr::pivot_wider(names_from = session, values_from = n_trials:mean_choice_iti,
+      tidyr::pivot_wider(names_from = session, values_from = c(session_date, n_trials:tidyselect::last_col()),
                          names_glue = "{.value}_{session}") |>
       dplyr::arrange(subject)
   } else {
@@ -1174,7 +1175,6 @@ ddrgt_pivot <- function(.df) {
                           names_pattern = "(.*)_s([0123456789]{0,})") |>
       dplyr::relocate(session_date, .after = subject) |>
       dplyr::filter(!is.na(n_trials))
-
     out <- wash_df(out, clean_names = FALSE) |>
       dplyr::arrange(subject, session)
   }
