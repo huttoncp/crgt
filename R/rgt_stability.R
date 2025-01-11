@@ -1,4 +1,4 @@
-# Copyright 2023 Craig P. Hutton
+# Copyright 2025 Craig P. Hutton
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

@@ -26,6 +26,7 @@ columns, for the long format/shape (one column per variable):
 \item \strong{subject:} rat ID number
 \item \strong{session_date:} session date (yyyy-mm-dd) according to the MedPC file
 \item \strong{session:} session number (subject's perspective)
+\item \strong{msn:} the MedPC program that was run during the session
 \item \strong{n_trials:} number of trials initiated in the session
 \item \strong{premat_n:} number of premature responses in the session
 \item \strong{premat_prop:} premat_n/n_trials = premature response rate (for the session)

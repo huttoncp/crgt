@@ -40,6 +40,7 @@ A data frame containing analysis-ready RGT data with the following columns
 \item \strong{group:} experimental group (only valid if entered into MedPC)
 \item \strong{session_date:} session date (yyyy-mm-dd) according to the MedPC file
 \item \strong{session:} session number (subject's perspective)
+\item \strong{msn:} the MedPC program that was run during the session
 \item \strong{n_trials:} number of trials initiated in the session
 \item \strong{premat_n:} number of premature responses in the session
 \item \strong{premat_prop:} premat_tot/n_trials = premature response rate (for the session)

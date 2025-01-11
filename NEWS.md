@@ -1,3 +1,28 @@
+# crgt 0.0.2.9000 - January 11th, 2025
+
+* Enabled `iti9_read()` and `iti9_prep()` to parse MedPC files collected using new ITI-9 MedPC program versions (rGT_ClassicA_I9, rGT_ClassicB_I9, rGT_A-cue-I9, rGT_B-cue_I9).
+
+* The name of the MedPC program used to collect the raw rGT data for each session is now retained in the outputs of the `*prep()` functions under the "msn" column.
+
+* The `rgt_read_file()`, `rgt_read()`, `rgt_prep()`, and `rgt_pivot()` functions have been generalized to flexibly parse all supported rGT data files. The previous versions of these functions have been renamed to `iti5_read_file()`, `iti5_read()`, `iti5_prep()`, and `iti5_pivot()`. Most users should therefore be able to primarily use `rgt_read_file()`, `rgt_read()`, `rgt_prep()`, and `rgt_pivot()` to parse rGT data. This switch was made to overcome issues users reported with keeping track of which set of functions to apply to which data files. Thus, most users should now be able to use this one set of functions to parse any of the supported rGT data files (5CRST data should still be parsed using the `fcsrt*` function set). Supported files include data collected using the following MedPC programs:
+    * rGT_ClassicA (uncued rGT with a 5-second ITI, version A)
+    * rGT_ClassicB (uncued rGT with a 5-second ITI, version B)
+    * rGT_ClassicA_I9 (uncued rGT with a 9-second ITI, version A)
+    * rGT_ClassicB_I9 (uncued rGT with a 9-second ITI, version B)
+    * rGT_A-cue (cued rGT with a 5-second ITI, version A)
+    * rGT_B-cue (cued rGT with a 5-second ITI, version B)
+    * RevRGT_A-cue (reverse-cued rGT with a 5-second ITI, version A)
+    * RevRGT_B-cue (reverse-cued rGT with a 5-second ITI, version B)
+    * rGT_A-cue_I9 or rGT_A-cue-I9 (cued rGT with a 9-second ITI, version A)
+    * rGT_B-cue_I9 or rG_B-cue-I9 (cued rGT with a 9-second ITI, version B)
+    * rGT_A-cue-ITI9-v3 (cued rGT with a 9-second ITI, version A)
+    * rGT_B-cue-ITI9-v3 (cued rGT with a 9-second ITI, version A)
+    * DDrGT_A-cue-v10_ideal_phenotype (delay discounting rGT - ideal phenotype, version A)
+    * DDrGT_A-cue-v10_worsening_phenotype (delay discounting rGT - worsening phenotype, version A)
+    * DDrGT_B-cue-v10_ideal_phenotype (delay discounting rGT - ideal phenotype, version B)
+    * DDrGT_B-cue-v10_worsening_phenotype (delay discounting rGT - worsening phenotype, version B)
+
+
 # crgt 0.0.1.9006 - May 11th, 2024
 
 * Fixed a bug that prevented the shape = "wide" output option for `rgt_prep()` from pivoting some columns in the raw data when aggregating it by session that led to problems if a user subsequently attempted to use `rgt_pivot()` to pivot it to the long format.

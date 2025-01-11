@@ -1,4 +1,4 @@
-# Copyright 2023 Craig P. Hutton
+# Copyright 2025 Craig P. Hutton
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -261,6 +261,7 @@ fcsrt_read <- function(path = "", output_file = NULL,
 #'   \item **pun_persev_h4:** perseverant response on hole 4 during punishment
 #'   \item **pun_persev_h5:** perseverant response on hole 5 during punishment
 #'   \item **pun_head_entry:** indicator of the rat responding during a time-out
+#'   \item **pun_dur:** timeout punishment duration
 #'   \item **premature_resp:** premature response indicator
 #'   \item **premature_hole:** hole chosen when prematurely responding
 #'   \item **rew_persev_h1:** perseverant response on hole 1 during reward
@@ -286,7 +287,7 @@ fcsrt_read <- function(path = "", output_file = NULL,
 #' gambling task. Neuropsychopharmacology, 34(10), 2329-2343.
 #'
 #' @export
-rgt_read_file <- function(path = "")  {
+iti5_read_file <- function(path = "")  {
   if(!file.exists(path)){
     path <- rstudioapi::selectFile()
   }
@@ -399,6 +400,7 @@ rgt_read_file <- function(path = "")  {
 #'   \item **pun_persev_h4:** perseverant response on hole 4 during punishment
 #'   \item **pun_persev_h5:** perseverant response on hole 5 during punishment
 #'   \item **pun_head_entry:** indicator of the rat responding during a time-out
+#'   \item **pun_dur:** timeout punishment duration
 #'   \item **premature_resp:** premature response indicator
 #'   \item **premature_hole:** hole chosen when prematurely responding
 #'   \item **rew_persev_h1:** perseverant response on hole 1 during reward
@@ -424,7 +426,7 @@ rgt_read_file <- function(path = "")  {
 #' gambling task. Neuropsychopharmacology, 34(10), 2329-2343.
 #'
 #' @export
-rgt_read <- function(path = "", output_file = NULL,
+iti5_read <- function(path = "", output_file = NULL,
                      pattern = NULL, fixed = FALSE, negate = FALSE, progress = TRUE) {
   if(!dir.exists(path)){
     path <- rstudioapi::selectDirectory()
@@ -435,7 +437,7 @@ rgt_read <- function(path = "", output_file = NULL,
     file_list <- grep(pattern, file_list, value = TRUE, fixed = fixed, invert = negate)
   }
   file_paths <- paste(folder, file_list, sep = "/")
-  out <- purrr::map(file_paths, rgt_read_file, .progress = progress) |> #read each file and store in a list of data.tables
+  out <- purrr::map(file_paths, iti5_read_file, .progress = progress) |> #read each file and store in a list of data.tables
     data.table::rbindlist() |> #combine data frames
     wash_df() #parse column classes, remove empty
 
@@ -955,6 +957,295 @@ ddrgt_read <- function(path = "", output_file = NULL,
   out <- purrr::map(file_paths, ddrgt_read_file, .progress = progress) |> #read each file and store in a list of data.tables
     data.table::rbindlist() |> #combine data frames
     wash_df() #parse column classes, remove empty
+
+  if(!missing(output_file)) {
+    if(!grepl("\\.csv$", output_file)) {
+      message('output file name must end in ".csv"
+              \nappending ".csv" to output file name')
+    }
+    readr::write_csv(out, output_file)
+    message(paste0("data exported to path: ", output_file))
+  }
+
+  return(out)
+}
+
+#' Read a raw MedPC file from the cued or uncued rat gambling task.
+#'
+#' Read a raw MedPC (Tatham & Zurn, 1989) data file from the cued (Barrus &
+#' Winstanley, 2016) or uncued (Zeeb et al., 2009) versions of the rat gambling
+#' task (RGT) and convert it into an R data.table.
+#'
+#' @importFrom rstudioapi selectFile
+#' @importFrom data.table data.table
+#' @importFrom data.table fifelse
+#' @importFrom data.table :=
+#' @importFrom lubridate mdy
+#' @importFrom stringr str_glue
+#'
+#' @param path Character string for the raw MedPC file path, e.g.
+#'   "!2021-11-13_7h01m.Subject 1" if the file is in your working directory. A
+#'   file explorer window will pop-up to allow you to choose the file
+#'   interactively if the path is unspecified.
+#'
+#' @return A data frame containing rGT data with columns that depend on the
+#'   source data MSN. For standard cued/uncued ITI5 data, the output will include
+#' \itemize{
+#'   \item **msn:** task reward contingency coding version (A or B)
+#'   \item **start_date:** the session start date
+#'   \item **start_time:** the session start time
+#'   \item **subject:** subject identifier
+#'   \item **group:** experimental group
+#'   \item **box:** the operant box used to collect the data
+#'   \item **experiment:** experiment identifier
+#'   \item **session:** session number
+#'   \item **trial:** trial number
+#'   \item **rewarded:** 1 if rewarded, 0 if punished
+#'   \item **pellets:** number of pellets dispensed
+#'   \item **omission:** indicator of failure to respond
+#'   \item **chosen:** the option chosen in the trial
+#'   \item **choice_lat:** time taken to make a choice
+#'   \item **collect_lat:** time to collect a reward
+#'   \item **pun_persev_h1:** perseverant response on hole 1 during punishment
+#'   \item **pun_persev_h2:** perseverant response on hole 2 during punishment
+#'   \item **pun_persev_h3:** perseverant response on hole 3 during punishment
+#'   \item **pun_persev_h4:** perseverant response on hole 4 during punishment
+#'   \item **pun_persev_h5:** perseverant response on hole 5 during punishment
+#'   \item **pun_head_entry:** indicator of the rat responding during a time-out
+#'   \item **premature_resp:** premature response indicator
+#'   \item **premature_hole:** hole chosen when prematurely responding
+#'   \item **rew_persev_h1:** perseverant response on hole 1 during reward
+#'   \item **rew_persev_h2:** perseverant response on hole 1 during reward
+#'   \item **rew_persev_h3:** perseverant response on hole 1 during reward
+#'   \item **rew_persev_h4:** perseverant response on hole 1 during reward
+#'   \item **rew_persev_h5:** perseverant response on hole 1 during reward
+#' }
+#'
+#'  ITI-9 data will also include the following columns:
+#'  \itemize{
+#'   \item **iti_dur:** intertrial interval duration used during data collection
+#'   \item **premature_time:** premature response time
+#'  }
+#'
+#'  DD-rGT data will also also include the following columns:
+#'
+#'  \itemize{
+#'   \item **premature_time:** premature response time
+#'   \item **chosen_iti_dur:** intertrial interval of the chosen hole
+#'   \item **iti_dur_p1:** intertrial interval set for P1
+#'   \item **iti_dur_p2:** intertrial interval set for P2
+#'   \item **iti_dur_p3:** intertrial interval set for P3
+#'   \item **iti_dur_p4:** intertrial interval set for P4
+#'   \item **h1_on:** indicator of whether or not hole 1 was active when the rat responded
+#'   \item **h2_on:** indicator of whether or not hole 2 was active when the rat responded
+#'   \item **h4_on:** indicator of whether or not hole 4 was active when the rat responded
+#'   \item **h5_on:** indicator of whether or not hole 5 was active when the rat responded
+#' }
+#'
+#' @author Craig P. Hutton, \email{craig.hutton@@gmail.com}
+#'
+#' @references
+#' Barrus, M.M., & Winstanley, C.A. (2016). Dopamine D3 receptors modulate the
+#' ability of win-paired cues to increase risky choice in a rat gambling task.
+#' Journal of Neuroscience, 36(3), 785-794.
+#'
+#' Tatham, T.A., & Zurn, K.R. (1989). The MED-PC experimental apparatus
+#' programming system. Behavior Research Methods, Instruments, & Computers,
+#' 21(2), 294-302.
+#'
+#' Zeeb, F.D., Robbins, T.W., & Winstanley, C.A. (2009). Serotonergic and
+#' dopaminergic modulation of gambling behavior as assessed using a novel rat
+#' gambling task. Neuropsychopharmacology, 34(10), 2329-2343.
+#'
+#' @export
+rgt_read_file <- function(path = "")  {
+  if(!file.exists(path)){
+    path <- rstudioapi::selectFile()
+  }
+  med_pc_raw <- suppressWarnings(import_medpc(path))
+  msn <- med_pc_raw$MSN
+  if(grepl(pattern = "rGT_", x = msn) && !grepl(pattern = "I9|DDrGT", x = msn)) {
+    out <- iti5_read_file(path = path)
+  } else if(grepl(pattern = "I9", x = msn)) {
+    out <- iti9_read_file(path = path)
+  } else if(grepl(pattern = "DDrGT", x = msn)){
+    out <- ddrgt_read_file(path = path)
+  } else {
+    supported_msns <- c("rGT_classicA", "rGT_classicB", #uncued ITI-5
+                        "rGT_A-cue", "rGT_B-cue", "RevRGT_A-cue", "RevRGT_B-cue", #cued ITI-5
+                        "rGT_ClassicA_I9", "rGT_ClassicB_I9", #uncued ITI-9
+                        "rGT_A-cue-I9", "rGT_A-cue_I9", "rGT_B-cue_I9", "rGT_B-cue-I9", #cued ITI-9
+                        "rGT_A-cue-ITI9-v3", "rGT_B-cue-ITI9-v3",# cued ITI-9
+                        "DDrGT_A-cue-v10_ideal_phenotype", "DDrGT_A-cue-v10_worsening_phenotype", #ddrGT vA
+                        "DDrGT_B-cue-v10_ideal_phenotype", "DDrGT_B-cue-v10_worsening_phenotype") #ddrGT vB
+    stop(
+      stringr::str_glue("the MedPC program file is not supported according to the listed MSN code.\nCurrently supported programs include:\n {paste(supported_msns, collapse = '\n ')}")
+    )
+  }
+  return(out)
+}
+
+
+#' Read and combine a folder of raw MedPC files from the cued or uncued rat gambling task.
+#'
+#' Read a folder of raw MedPC (Tatham & Zurn, 1989) data files from the cued
+#' (Barrus & Winstanley, 2016) or uncued (Zeeb et al., 2009) version of the rat
+#' gambling task (RGT) and convert them into a single tibble with an option to
+#' export the data to a comma-separated variable (.csv) file.
+#'
+#' @importFrom rstudioapi selectDirectory
+#' @importFrom data.table rbindlist
+#' @importFrom dplyr mutate
+#' @importFrom readr write_csv
+#' @importFrom purrr map
+#' @importFrom purrr map_chr
+#'
+#' @param path Character string for path to the folder containing the raw
+#'   MedPC files, e.g. "~/raw_rgt_files/". A file explorer window will pop-up
+#'   to allow you to choose the folder interactively if the path is unspecified.
+#'
+#' @param output_file Comma-separated variable (csv) file path and name to
+#'   export the combined data to, which should end in ".csv". e.g.
+#'   "rgt_data.csv" to save the file in your working directory.
+#'
+#' @param pattern If the specified folder contains non-MedPC files or other
+#'   folders, this argument allows you to use a regular expression or fixed
+#'   string to tell the function which files to read. For example, raw MedPC
+#'   files often start with "!", so you might use pattern = "!" to only read
+#'   files containing a "!" in their name. See this [this blog
+#'   post](https://craig.rbind.io/post/2020-06-28-asgr-2-3-string-manipulation/)
+#'   to learn more about regular expressions in R.
+#'
+#' @param fixed Set this to `TRUE` if you want the pattern argument to be
+#'   interpreted as a fixed string pattern (i.e. exactly as written) instead of
+#'   a regular expression for selecting the MedPC files in the chosen folder.
+#'   Ignored if "pattern" argument is not used.
+#'
+#' @param negate Set this to `TRUE` to read files with names which do *not*
+#'   match the specified pattern. Ignored if "pattern" argument is not used.
+#'
+#' @param progress Should a progress bar be displayed when reading multiple
+#'   MedPC data files (default = TRUE)? See [purrr::progress_bars]
+#'   for details and options.
+#'
+#' @return A data frame containing rGT data with columns that depend on the
+#'   source data MSN. For standard cued/uncued ITI5 data, the output will include
+#' \itemize{
+#'   \item **msn:** task reward contingency coding version (A or B)
+#'   \item **start_date:** the session start date
+#'   \item **start_time:** the session start time
+#'   \item **subject:** subject identifier
+#'   \item **group:** experimental group
+#'   \item **box:** the operant box used to collect the data
+#'   \item **experiment:** experiment identifier
+#'   \item **session:** session number
+#'   \item **trial:** trial number
+#'   \item **rewarded:** 1 if rewarded, 0 if punished
+#'   \item **pellets:** number of pellets dispensed
+#'   \item **omission:** indicator of failure to respond
+#'   \item **chosen:** the option chosen in the trial
+#'   \item **choice_lat:** time taken to make a choice
+#'   \item **collect_lat:** time to collect a reward
+#'   \item **pun_persev_h1:** perseverant response on hole 1 during punishment
+#'   \item **pun_persev_h2:** perseverant response on hole 2 during punishment
+#'   \item **pun_persev_h3:** perseverant response on hole 3 during punishment
+#'   \item **pun_persev_h4:** perseverant response on hole 4 during punishment
+#'   \item **pun_persev_h5:** perseverant response on hole 5 during punishment
+#'   \item **pun_head_entry:** indicator of the rat responding during a time-out
+#'   \item **premature_resp:** premature response indicator
+#'   \item **premature_hole:** hole chosen when prematurely responding
+#'   \item **rew_persev_h1:** perseverant response on hole 1 during reward
+#'   \item **rew_persev_h2:** perseverant response on hole 1 during reward
+#'   \item **rew_persev_h3:** perseverant response on hole 1 during reward
+#'   \item **rew_persev_h4:** perseverant response on hole 1 during reward
+#'   \item **rew_persev_h5:** perseverant response on hole 1 during reward
+#' }
+#'
+#'  ITI-9 data will also include the following columns:
+#'  \itemize{
+#'   \item **iti_dur:** intertrial interval duration used during data collection
+#'   \item **premature_time:** premature response time
+#'  }
+#'
+#'  DD-rGT data will also include the following columns:
+#'
+#'  \itemize{
+#'   \item **premature_time:** premature response time
+#'   \item **chosen_iti_dur:** intertrial interval of the chosen hole
+#'   \item **iti_dur_p1:** intertrial interval set for P1
+#'   \item **iti_dur_p2:** intertrial interval set for P2
+#'   \item **iti_dur_p3:** intertrial interval set for P3
+#'   \item **iti_dur_p4:** intertrial interval set for P4
+#'   \item **h1_on:** indicator of whether or not hole 1 was active when the rat responded
+#'   \item **h2_on:** indicator of whether or not hole 2 was active when the rat responded
+#'   \item **h4_on:** indicator of whether or not hole 4 was active when the rat responded
+#'   \item **h5_on:** indicator of whether or not hole 5 was active when the rat responded
+#' }
+#'
+#' @author Craig P. Hutton, \email{craig.hutton@@gmail.com}
+#'
+#' @references
+#' Barrus, M.M., & Winstanley, C.A. (2016). Dopamine D3 receptors modulate the
+#' ability of win-paired cues to increase risky choice in a rat gambling task.
+#' Journal of Neuroscience, 36(3), 785-794.
+#'
+#' Tatham, T.A., & Zurn, K.R. (1989). The MED-PC experimental apparatus
+#' programming system. Behavior Research Methods, Instruments, & Computers,
+#' 21(2), 294-302.
+#'
+#' Zeeb, F.D., Robbins, T.W., & Winstanley, C.A. (2009). Serotonergic and
+#' dopaminergic modulation of gambling behavior as assessed using a novel rat
+#' gambling task. Neuropsychopharmacology, 34(10), 2329-2343.
+#'
+#' @export
+rgt_read <- function(path = "", output_file = NULL,
+                      pattern = NULL, fixed = FALSE, negate = FALSE, progress = TRUE) {
+  if(!dir.exists(path)){
+    path <- rstudioapi::selectDirectory()
+  }
+  folder <- path
+
+  file_list <- list.files(folder, recursive = TRUE)
+
+  if(!missing(pattern)) {
+    file_list <- grep(pattern, file_list, value = TRUE, fixed = fixed, invert = negate)
+  }
+  file_paths <- paste(folder, file_list, sep = "/")
+
+  msns <- purrr::map_chr(file_paths, ~import_medpc(.x)$MSN) |> unique()
+  iti5_present <- any(!grepl(pattern = "I9|DDrGT", x = msns) & grepl(pattern = "rGT_", x = msns))
+  iti9_present <- any(grepl(pattern = "I9", x = msns))
+  ddrgt_present <- any(grepl(pattern = "DDrGT", x = msns))
+
+  if(
+    (iti5_present & iti9_present) || (iti5_present & ddrgt_present) ||(iti9_present & ddrgt_present)) {
+    warning(paste(
+      "A combination of ITI-5, ITI-9, and/or ddrGT data sources detected.",
+      "  Will attempt to parse each file using the correct table profile and then join them.",
+      "  If output is flawed consider separating files and attemping to parse one rGT data type at a time (ITI-5 or ITI-9 or ddRGT).",
+      sep = "\n")
+      )
+    out <- purrr::map(file_paths, rgt_read_file, .progress = progress) |> #read each file and store in a list of data.tables
+      # purrr::reduce(~dplyr::full_join(.x)) |> #combine data frames
+      # wash_df() #parse column classes, remove empty
+      data.table::rbindlist(fill = TRUE) |> #combine data frames
+      wash_df() #parse column classes, remove empty
+  } else if(iti5_present) {
+    out <- purrr::map(file_paths, iti5_read_file, .progress = progress) |> #read each file and store in a list of data.tables
+      data.table::rbindlist() |> #combine data frames
+      wash_df() #parse column classes, remove empty
+    return(out)
+  } else if(iti9_present) {
+    out <- purrr::map(file_paths, iti9_read_file, .progress = progress) |> #read each file and store in a list of data.tables
+      data.table::rbindlist() |> #combine data frames
+      wash_df() #parse column classes, remove empty
+    return(out)
+  } else {
+    out <- purrr::map(file_paths, ddrgt_read_file, .progress = progress) |> #read each file and store in a list of data.tables
+      data.table::rbindlist() |> #combine data frames
+      wash_df() #parse column classes, remove empty
+    return(out)
+  }
 
   if(!missing(output_file)) {
     if(!grepl("\\.csv$", output_file)) {

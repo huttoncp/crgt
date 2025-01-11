@@ -27,9 +27,11 @@ following columns, for the long format/shape (one column per variable):
 \item \strong{group:} experimental group (only valid if entered into MedPC)
 \item \strong{session_date:} session date (yyyy-mm-dd) according to the MedPC file
 \item \strong{session:} session number (subject's perspective)
+\item \strong{msn:} the MedPC program that was run during the session
 \item \strong{n_trials:} number of trials initiated in the session
 \item \strong{premat_n:} number of premature responses in the session
 \item \strong{premat_prop:} premat_tot/n_trials = premature response rate (for the session)
+\item \strong{mean_premat_time:} mean time of premature responses during the session
 \item \strong{total_choices:} number of choices made in the session (successfully completed trials)
 \item \strong{P1:} proportion of total_choices where option P1 was selected (P1 preference)
 \item \strong{P2:} proportion of total_choices where option P2 was selected (P2 preference)

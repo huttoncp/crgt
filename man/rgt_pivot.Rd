@@ -22,11 +22,18 @@ prepared by \code{\link[=rgt_prep]{rgt_prep()}}.}
 A data frame containing session-aggregated RGT data with the
 following columns, for the long format/shape (one column per variable):
 
+A data frame containing analysis-ready rGT data with columns that
+depend on the source data MSNs. The long format/shape (one column per
+variable) includes the following columns.
+
+For standard cued/uncued ITI5 data:
+
 \itemize{
 \item \strong{subject:} rat ID number
 \item \strong{group:} experimental group (only valid if entered into MedPC)
 \item \strong{session_date:} session date (yyyy-mm-dd) according to the MedPC file
 \item \strong{session:} session number (subject's perspective)
+\item \strong{msn:} the MedPC program that was run during the session
 \item \strong{n_trials:} number of trials initiated in the session
 \item \strong{premat_n:} number of premature responses in the session
 \item \strong{premat_prop:} premat_tot/n_trials = premature response rate (for the session)
@@ -43,6 +50,24 @@ following columns, for the long format/shape (one column per variable):
 \item \strong{choice_lat_P3:} mean choice latency for trials when P3 was chosen
 \item \strong{choice_lat_P4:} mean choice latency for trials when P4 was chosen
 \item \strong{mean_collect_lat:} mean time to nose poke for sugar pellets when the rat was rewarded
+}
+
+ITI-9 data also includes:
+
+\itemize{
+\item \strong{mean_premat_time:} mean time of premature responses during the session
+}
+
+DD-rGT data also includes:
+
+\itemize{
+\item \strong{mean_premat_time:} mean time of premature responses during the session
+\item \strong{dd_phenotype:} the targeted delay discounting phenotype (ideal or worsening)
+\item \strong{iti_dur_P1:} ITI duration used for P1 during the session
+\item \strong{iti_dur_P2:} ITI duration used for P2 during the session
+\item \strong{iti_dur_P3:} ITI duration used for P3 during the session
+\item \strong{iti_dur_P4:} ITI duration used for P4 during the session
+\item \strong{mean_choice_iti:} mean ITI of options chosen during the session
 }
 
 The wide format/shape contains the same session-aggregated variables that

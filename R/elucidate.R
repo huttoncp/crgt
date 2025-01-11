@@ -1,4 +1,4 @@
-# Copyright 2024 Province of British Columbia
+# Copyright 2025 Province of British Columbia
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
