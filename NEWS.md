@@ -1,3 +1,7 @@
+# crgt 0.0.2.9001 - January 30th, 2025
+
+* Corrected a bug that prevented `ddrgt_prep()` from aggregating raw delay discounting rGT data.
+
 # crgt 0.0.2.9000 - January 11th, 2025
 
 * Enabled `iti9_read()` and `iti9_prep()` to parse MedPC files collected using new ITI-9 MedPC program versions (rGT_ClassicA_I9, rGT_ClassicB_I9, rGT_A-cue-I9, rGT_B-cue_I9).

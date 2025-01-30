@@ -1041,13 +1041,13 @@ ddrgt_prep <- function(.df, shape = c("long", "wide"),
                   chosen = factor(chosen, levels = c("P1", "P2", "P3", "P4"))) |>
     dplyr::filter(!is.na(chosen)) |>
     dplyr::mutate(version = dplyr::if_else(stringr::str_detect(msn, "DDrGT_A"), "A", "B")) |>
-    dplyr::select(version, subject, session, trial, chosen) |>
+    dplyr::select(version, msn, subject, session, trial, chosen) |>
     dplyr::distinct() |>
     dplyr::mutate(times_chosen = dplyr::n(), .by = c(subject, session, chosen)) |>
     dplyr::mutate(total_choices = dplyr::n(),
                   choice_prop = round(times_chosen/total_choices, 4),
                   .by = c(subject, session)) |>
-    dplyr::select(subject, session, chosen, total_choices, choice_prop) |>
+    dplyr::select(subject, msn, session, chosen, total_choices, choice_prop) |>
     dplyr::arrange(subject, session, chosen) |>
     dplyr::distinct() |>
     tidyr::pivot_wider(names_from = chosen,
