@@ -98,7 +98,7 @@ fcsrt_prep <- function(.df, shape = c("long", "wide"), output_file = NULL,
 
   df_fcsrt_premature <- .df  |>
     dplyr::arrange(subject, session_date) |>
-    dplyr::mutate(sum_of_prematures = sum(prematures, na.rm = TRUE),
+    dplyr::mutate(sum_of_prematures = sum(premature_resp, na.rm = TRUE),
                   n_trials = sum(!is.na(offered)),
                   total_choices = max(trial, na.rm = TRUE), #total valid trials, where a choice was made
                   prop_prems = (sum_of_prematures/total_choices),
