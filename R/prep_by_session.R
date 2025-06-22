@@ -116,7 +116,7 @@ fcsrt_prep <- function(.df, shape = c("long", "wide"), output_file = NULL,
     dplyr::arrange(subject, session)
 
   df_fcsrt <- .df |>
-    dplyr::filter(msn != "ChamberTest", prematures == 0, trial > 0) |>
+    dplyr::filter(msn != "ChamberTest", premature_resp == 0, trial > 0) |>
     dplyr::arrange(subject, session_date) |>
     dplyr::select(subject, session_date, session, trial, stim_dur, chosen, offered, omission) |>
     dplyr::distinct() |>
