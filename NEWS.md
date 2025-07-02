@@ -1,3 +1,10 @@
+# crgt 0.0.2.9010 - July 2nd, 2025
+
+* Updated the `*prep()` functions to ensure that only rewarded trials are included in the calculation of mean collection latencies.
+
+* `rgt_prep()` no longer fails with an error if a non-validated/new MSN code is detected. The error message has been changed to a warning message encouraging the user to check the output for errors prior to analysis, but the function should now proceed with attempting to aggregate the data labelled with an unrecognized MSN code.
+
+
 # crgt 0.0.2.9001 - January 30th, 2025
 
 * Corrected a bug that prevented `ddrgt_prep()` from aggregating raw delay discounting rGT data.

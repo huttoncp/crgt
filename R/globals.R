@@ -31,4 +31,4 @@ utils::globalVariables(c("session", "start_date", "session_date", "n_trials", "s
                          "preferred_choice", "stable_preference", "model", "SE",
                          "session.trend", "session_trend_fe", "session_trend_re", "se_fe", "se_re",
                          "session_beta", "session_se", "session_ci_lower", "session_ci_upper",
-                         "session_OR", "OR_CI_lower", "OR_CI_upper"))
+                         "session_OR", "OR_CI_lower", "OR_CI_upper", "rewarded"))

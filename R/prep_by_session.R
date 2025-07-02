@@ -411,6 +411,7 @@ iti5_prep <- function(.df, shape = c("long", "wide"),
   #collection latency
   collection_lat <- .df |>
     dplyr::filter(chosen != 0, msn %in% c("rGT_classicA", "rGT_classicB", "rGT_A-cue", "rGT_B-cue", "RevRGT_A-cue", "RevRGT_B-cue")) |>
+    dplyr::filter(rewarded == 1) |> #only trials in which the rat was rewarded
     dplyr::select(subject, msn, group, session, collect_lat, chosen) |>
     dplyr::summarise(mean_collect_lat = mean(collect_lat, na.rm = TRUE),
                      .by = c(subject, msn, group, session))
@@ -713,6 +714,7 @@ iti9_prep <- function(.df, shape = c("long", "wide"),
   #collection latency
   collection_lat <- .df |>
     dplyr::filter(chosen != 0) |>
+    dplyr::filter(rewarded == 1) |> #only trials in which the rat was rewarded
     dplyr::select(subject, msn, group, session, collect_lat, chosen) |>
     dplyr::filter(stringr::str_detect(msn, "I9|ITI9")) |>
     dplyr::summarise(mean_collect_lat = mean(collect_lat, na.rm = TRUE),
@@ -1023,6 +1025,7 @@ ddrgt_prep <- function(.df, shape = c("long", "wide"),
   #collection latency
   collection_lat <- .df |>
     dplyr::filter(chosen != 0, stringr::str_detect(msn, "DDrGT_A|DDrGT_B")) |>
+    dplyr::filter(rewarded == 1) |> #only trials in which the rat was rewarded
     dplyr::select(subject, group, session, collect_lat, chosen) |>
     dplyr::summarise(mean_collect_lat = mean(collect_lat, na.rm = TRUE),
                      .by = c(subject, group, session))
@@ -1308,8 +1311,8 @@ rgt_prep <- function(.df, shape = c("long", "wide"),
                       "DDrGT_A-cue-v10_ideal_phenotype", "DDrGT_A-cue-v10_worsening_phenotype", #ddrGT vA
                       "DDrGT_B-cue-v10_ideal_phenotype", "DDrGT_B-cue-v10_worsening_phenotype") #ddrGT vB
   if(any(!(msns %in% supported_msns))) {
-    stop(
-      stringr::str_glue("the MedPC program used for data collection is not supported according to the listed MSN code.\nCurrently supported programs include:\n {paste(supported_msns, collapse = '\n ')}")
+    warning(
+      stringr::str_glue("One or more of the MedPC programs used to collect the provided data are not among the MSNs that have been tested using this function according to the listed MSN code.\nOutput may contain errors, review it prior to analysis.\nMedPC programs (MSN codes) this function has been confirmed to work with include:\n {paste(supported_msns, collapse = '\n ')}")
          )
   }
 
